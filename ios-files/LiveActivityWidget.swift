@@ -2,30 +2,12 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
-public struct LiveActivityAttributes: ActivityAttributes {
-  public struct ContentState: Codable, Hashable {
+struct LiveActivityAttributes: ActivityAttributes {
+  struct ContentState: Codable, Hashable {
     var title: String
     var subtitle: String?
-    var timerEndDateInMilliseconds: Double?
-    var progress: Double?
-    var imageName: String?
-    var dynamicIslandImageName: String?
-
-    public init(
-      title: String,
-      subtitle: String? = nil,
-      timerEndDateInMilliseconds: Double? = nil,
-      progress: Double? = nil,
-      imageName: String? = nil,
-      dynamicIslandImageName: String? = nil
-    ) {
-      self.title = title
-      self.subtitle = subtitle
-      self.timerEndDateInMilliseconds = timerEndDateInMilliseconds
-      self.progress = progress
-      self.imageName = imageName
-      self.dynamicIslandImageName = dynamicIslandImageName
-    }
+    var mode: String?
+    var stopwatch: Stopwatch?
   }
 
   var name: String
@@ -46,136 +28,70 @@ public struct LiveActivityAttributes: ActivityAttributes {
   var imageAlign: String?
   var contentFit: String?
 
-  public init(
-    name: String,
-    backgroundColor: String? = nil,
-    titleColor: String? = nil,
-    subtitleColor: String? = nil,
-    progressViewTint: String? = nil,
-    progressViewLabelColor: String? = nil,
-    deepLinkUrl: String? = nil,
-    timerType: DynamicIslandTimerType? = nil,
-    padding: Int? = nil,
-    paddingDetails: PaddingDetails? = nil,
-    imagePosition: String? = nil,
-    imageWidth: Int? = nil,
-    imageHeight: Int? = nil,
-    imageWidthPercent: Double? = nil,
-    imageHeightPercent: Double? = nil,
-    imageAlign: String? = nil,
-    contentFit: String? = nil
-  ) {
-    self.name = name
-    self.backgroundColor = backgroundColor
-    self.titleColor = titleColor
-    self.subtitleColor = subtitleColor
-    self.progressViewTint = progressViewTint
-    self.progressViewLabelColor = progressViewLabelColor
-    self.deepLinkUrl = deepLinkUrl
-    self.timerType = timerType
-    self.padding = padding
-    self.paddingDetails = paddingDetails
-    self.imagePosition = imagePosition
-    self.imageWidth = imageWidth
-    self.imageHeight = imageHeight
-    self.imageWidthPercent = imageWidthPercent
-    self.imageHeightPercent = imageHeightPercent
-    self.imageAlign = imageAlign
-    self.contentFit = contentFit
-  }
-
-  public enum DynamicIslandTimerType: String, Codable {
+  enum DynamicIslandTimerType: String, Codable {
     case circular
     case digital
   }
 
-  public struct PaddingDetails: Codable, Hashable {
+  struct PaddingDetails: Codable, Hashable {
     var top: Int?
     var bottom: Int?
     var left: Int?
     var right: Int?
     var vertical: Int?
     var horizontal: Int?
+  }
 
-    public init(
-      top: Int? = nil,
-      bottom: Int? = nil,
-      left: Int? = nil,
-      right: Int? = nil,
-      vertical: Int? = nil,
-      horizontal: Int? = nil
-    ) {
-      self.top = top
-      self.bottom = bottom
-      self.left = left
-      self.right = right
-      self.vertical = vertical
-      self.horizontal = horizontal
-    }
+  struct Stopwatch: Codable, Hashable {
+    var id: String?
+    var elapsed: String?
+    var isRunning: Bool?
   }
 }
 
-@available(iOS 16.1, *)
-public struct LiveActivityWidget: Widget {
-  public var body: some WidgetConfiguration {
+struct LiveActivityWidget: Widget {
+  var body: some WidgetConfiguration {
     ActivityConfiguration(for: LiveActivityAttributes.self) { context in
-      LiveActivityView(contentState: context.state, attributes: context.attributes)
-        .activityBackgroundTint(
-          context.attributes.backgroundColor.map { Color(hex: $0) }
-        )
-        .activitySystemActionForegroundColor(Color.black)
-        .applyWidgetURL(from: context.attributes.deepLinkUrl)
+      StopwatchLiveActivityView(
+        title: context.state.title,
+        stopwatch: context.state.stopwatch
+      ).activityBackgroundTint(
+        context.attributes.backgroundColor.map { Color(hex: $0) }
+      )
+      .activitySystemActionForegroundColor(Color.black)
+      .applyWidgetURL(from: context.attributes.deepLinkUrl)
+
     } dynamicIsland: { context in
-      DynamicIsland {
-        DynamicIslandExpandedRegion(.leading, priority: 1) {
-          dynamicIslandExpandedLeading(title: context.state.title, subtitle: context.state.subtitle)
-            .dynamicIsland(verticalPlacement: .belowIfTooWide)
-            .padding(.leading, 5)
-            .applyWidgetURL(from: context.attributes.deepLinkUrl)
+      let isRunning = context.state.stopwatch?.isRunning ?? false
+      let elapsed = context.state.stopwatch?.elapsed ?? "00:00"
+      return DynamicIsland {
+        DynamicIslandExpandedRegion(.leading) {
+          StopwatchExpandedLeadingView(
+            title: context.state.title,
+            subtitle: context.state.subtitle
+          )
         }
         DynamicIslandExpandedRegion(.trailing) {
-          if let imageName = context.state.imageName {
-            dynamicIslandExpandedTrailing(imageName: imageName)
-              .padding(.trailing, 5)
-              .applyWidgetURL(from: context.attributes.deepLinkUrl)
-          }
+          StopwatchExpandedTrailingView(
+            isRunning: isRunning
+          )
         }
+
         DynamicIslandExpandedRegion(.bottom) {
-          if let date = context.state.timerEndDateInMilliseconds {
-            dynamicIslandExpandedBottom(
-              endDate: date, progressViewTint: context.attributes.progressViewTint
-            )
-            .padding(.horizontal, 5)
-            .applyWidgetURL(from: context.attributes.deepLinkUrl)
-          }
+          StopwatchExpandedBottomView(elapsed: elapsed)
         }
+
       } compactLeading: {
-        if let dynamicIslandImageName = context.state.dynamicIslandImageName {
-          resizableImage(imageName: dynamicIslandImageName)
-            .frame(maxWidth: 23, maxHeight: 23)
-            .applyWidgetURL(from: context.attributes.deepLinkUrl)
-        }
+        StopwatchCompactLeadingView(elapsed: elapsed)
+
       } compactTrailing: {
-        if let date = context.state.timerEndDateInMilliseconds {
-          compactTimer(
-            endDate: date,
-            timerType: context.attributes.timerType ?? .circular,
-            progressViewTint: context.attributes.progressViewTint
-          ).applyWidgetURL(from: context.attributes.deepLinkUrl)
-        }
+        StopwatchCompactTrailingView(isRunning: isRunning)
+
       } minimal: {
-        if let date = context.state.timerEndDateInMilliseconds {
-          compactTimer(
-            endDate: date,
-            timerType: context.attributes.timerType ?? .circular,
-            progressViewTint: context.attributes.progressViewTint
-          ).applyWidgetURL(from: context.attributes.deepLinkUrl)
-        }
+        StopwatchMinimalView(isRunning: isRunning)
       }
     }
   }
-
-  public init() {}
 
   @ViewBuilder
   private func compactTimer(

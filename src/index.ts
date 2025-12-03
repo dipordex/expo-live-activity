@@ -7,42 +7,35 @@ type Voidable<T> = T | void
 
 export type DynamicIslandTimerType = 'circular' | 'digital'
 
-type ProgressBarType =
-  | {
-      date?: number
-      progress?: undefined
-    }
-  | {
-      date?: undefined
-      progress?: number
-    }
+type StopWatch = {
+  isRunning?: boolean
+  elapsed?: string
+  id?: string
+}
 
 export type LiveActivityState = {
   title: string
   subtitle?: string
-  progressBar?: ProgressBarType
-  imageName?: string
-  dynamicIslandImageName?: string
+  mode?: string
+  stopwatch?: StopWatch
 }
 
 export type NativeLiveActivityState = {
   title: string
   subtitle?: string
-  date?: number
-  progress?: number
-  imageName?: string
-  dynamicIslandImageName?: string
+  mode?: string
+  stopwatch?: StopWatch
 }
 
 export type Padding =
   | {
-      top?: number
-      bottom?: number
-      left?: number
-      right?: number
-      vertical?: number
-      horizontal?: number
-    }
+    top?: number
+    bottom?: number
+    left?: number
+    right?: number
+    vertical?: number
+    horizontal?: number
+  }
   | number
 
 export type ImagePosition = 'left' | 'right' | 'leftStretch' | 'rightStretch'
@@ -79,7 +72,7 @@ export type ActivityTokenReceivedEvent = {
 }
 
 export type ActivityPushToStartTokenReceivedEvent = {
-  activityPushToStartToken: string | null
+  activityPushToStartToken: string
 }
 
 type ActivityState = 'active' | 'dismissed' | 'pending' | 'stale' | 'ended'
@@ -181,34 +174,21 @@ export function updateActivity(id: string, state: LiveActivityState) {
   if (assertIOS('updateActivity')) return ExpoLiveActivityModule.updateActivity(id, state)
 }
 
-/**
- * @param {function} updateTokenListener The listener function that will be called when an update token is received.
- */
 export function addActivityTokenListener(
-  updateTokenListener: (event: ActivityTokenReceivedEvent) => void
+  listener: (event: ActivityTokenReceivedEvent) => void
 ): Voidable<EventSubscription> {
-  if (assertIOS('addActivityTokenListener'))
-    return ExpoLiveActivityModule.addListener('onTokenReceived', updateTokenListener)
+  if (assertIOS('addActivityTokenListener')) return ExpoLiveActivityModule.addListener('onTokenReceived', listener)
 }
 
-/**
- * Adds a listener that is called when a push-to-start token is received. Supported only on iOS > 17.2.
- * On earlier iOS versions, the listener will return null as a token.
- * @param {function} pushPushToStartTokenListener The listener function that will be called when the observer starts and then when a push-to-start token is received.
- */
 export function addActivityPushToStartTokenListener(
-  pushPushToStartTokenListener: (event: ActivityPushToStartTokenReceivedEvent) => void
+  listener: (event: ActivityPushToStartTokenReceivedEvent) => void
 ): Voidable<EventSubscription> {
   if (assertIOS('addActivityPushToStartTokenListener'))
-    return ExpoLiveActivityModule.addListener('onPushToStartTokenReceived', pushPushToStartTokenListener)
+    return ExpoLiveActivityModule.addListener('onPushToStartTokenReceived', listener)
 }
 
-/**
- * @param {function} statusListener The listener function that will be called when an activity status changes.
- */
 export function addActivityUpdatesListener(
-  statusListener: (event: ActivityUpdateEvent) => void
+  listener: (event: ActivityUpdateEvent) => void
 ): Voidable<EventSubscription> {
-  if (assertIOS('addActivityUpdatesListener'))
-    return ExpoLiveActivityModule.addListener('onStateChange', statusListener)
+  if (assertIOS('addActivityUpdatesListener')) return ExpoLiveActivityModule.addListener('onStateChange', listener)
 }

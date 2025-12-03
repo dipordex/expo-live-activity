@@ -185,60 +185,64 @@ import WidgetKit
         let position = attributes.imagePosition ?? "right"
         let isStretch = position.contains("Stretch")
         let isLeftImage = position.hasPrefix("left")
-        let hasImage = contentState.imageName != nil
-        let effectiveStretch = isStretch && hasImage
+//        let hasImage = contentState.imageName != nil
+//        let effectiveStretch = isStretch && hasImage
 
         HStack(alignment: .center) {
-          if hasImage, isLeftImage {
-            if let imageName = contentState.imageName {
-              alignedImage(imageName: imageName)
-            }
-          }
+//          if hasImage, isLeftImage {
+//            if let imageName = contentState.imageName {
+//              alignedImage(imageName: imageName)
+//            }
+//          }
 
           VStack(alignment: .leading, spacing: 2) {
             Text(contentState.title)
               .font(.title2)
               .fontWeight(.semibold)
-              .modifier(ConditionalForegroundViewModifier(color: attributes.titleColor))
-
+              .foregroundStyle(.blue)
+            if let mode = contentState.mode {
+              Text(mode)
+                .font(.title3)
+                .modifier(ConditionalForegroundViewModifier(color: attributes.subtitleColor))
+            }
             if let subtitle = contentState.subtitle {
               Text(subtitle)
                 .font(.title3)
                 .modifier(ConditionalForegroundViewModifier(color: attributes.subtitleColor))
             }
 
-            if effectiveStretch {
-              if let date = contentState.timerEndDateInMilliseconds {
-                ProgressView(timerInterval: Date.toTimerInterval(miliseconds: date))
-                  .tint(progressViewTint)
-                  .modifier(ConditionalForegroundViewModifier(color: attributes.progressViewLabelColor))
-              } else if let progress = contentState.progress {
-                ProgressView(value: progress)
-                  .tint(progressViewTint)
-                  .modifier(ConditionalForegroundViewModifier(color: attributes.progressViewLabelColor))
-              }
-            }
+//            if effectiveStretch {
+//              if let date = contentState.timerEndDateInMilliseconds {
+//                ProgressView(timerInterval: Date.toTimerInterval(miliseconds: date))
+//                  .tint(progressViewTint)
+//                  .modifier(ConditionalForegroundViewModifier(color: attributes.progressViewLabelColor))
+//              } else if let progress = contentState.progress {
+//                ProgressView(value: progress)
+//                  .tint(progressViewTint)
+//                  .modifier(ConditionalForegroundViewModifier(color: attributes.progressViewLabelColor))
+//              }
+//            }
           }.layoutPriority(1)
 
-          if hasImage, !isLeftImage { // right side (default)
-            Spacer()
-            if let imageName = contentState.imageName {
-              alignedImage(imageName: imageName)
-            }
-          }
+//          if hasImage, !isLeftImage { // right side (default)
+//            Spacer()
+//            if let imageName = contentState.imageName {
+//              alignedImage(imageName: imageName)
+//            }
+//          }
         }
 
-        if !effectiveStretch {
-          if let date = contentState.timerEndDateInMilliseconds {
-            ProgressView(timerInterval: Date.toTimerInterval(miliseconds: date))
-              .tint(progressViewTint)
-              .modifier(ConditionalForegroundViewModifier(color: attributes.progressViewLabelColor))
-          } else if let progress = contentState.progress {
-            ProgressView(value: progress)
-              .tint(progressViewTint)
-              .modifier(ConditionalForegroundViewModifier(color: attributes.progressViewLabelColor))
-          }
-        }
+//        if !effectiveStretch {
+//          if let date = contentState.timerEndDateInMilliseconds {
+//            ProgressView(timerInterval: Date.toTimerInterval(miliseconds: date))
+//              .tint(progressViewTint)
+//              .modifier(ConditionalForegroundViewModifier(color: attributes.progressViewLabelColor))
+//          } else if let progress = contentState.progress {
+//            ProgressView(value: progress)
+//              .tint(progressViewTint)
+//              .modifier(ConditionalForegroundViewModifier(color: attributes.progressViewLabelColor))
+//          }
+//        }
       }
       .padding(EdgeInsets(top: top, leading: leading, bottom: bottom, trailing: trailing))
     }
