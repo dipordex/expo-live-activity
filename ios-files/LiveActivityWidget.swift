@@ -8,6 +8,7 @@ struct LiveActivityAttributes: ActivityAttributes {
     var subtitle: String?
     var mode: String?
     var stopwatch: Stopwatch?
+    var timer: Timer?
   }
 
   var name: String
@@ -47,112 +48,135 @@ struct LiveActivityAttributes: ActivityAttributes {
     var elapsed: String?
     var isRunning: Bool?
   }
+
+  struct Timer: Codable, Hashable {
+    var id: String?
+    var duration: Double?
+    var remaining: Double?
+    var isRunning: Bool?
+    var endsAt: Double?
+  }
 }
 
 struct LiveActivityWidget: Widget {
   var body: some WidgetConfiguration {
     ActivityConfiguration(for: LiveActivityAttributes.self) { context in
-      StopwatchLiveActivityView(
-        title: context.state.title,
-        stopwatch: context.state.stopwatch
-      ).activityBackgroundTint(
-        context.attributes.backgroundColor.map { Color(hex: $0) }
-      )
-      .activitySystemActionForegroundColor(Color.black)
-      .applyWidgetURL(from: context.attributes.deepLinkUrl)
+      switch context.state.mode {
+      case "stopwatch":
+        StopwatchLiveActivityView(
+          title: context.state.title,
+          stopwatch: context.state.stopwatch
+        ).activityBackgroundTint(
+          context.attributes.backgroundColor.map { Color(hex: $0) }
+        )
+        .activitySystemActionForegroundColor(Color.black)
+        .applyWidgetURL(from: context.attributes.deepLinkUrl)
+      case "timer":
+        TimerLiveActivityView(
+          title: context.state.title,
+          timer: context.state.timer
+        )
+        .activityBackgroundTint(
+          context.attributes.backgroundColor.map { Color(hex: $0) }
+        )
+        .activitySystemActionForegroundColor(Color.black)
+        .applyWidgetURL(from: context.attributes.deepLinkUrl)
 
-    } dynamicIsland: { context in
-      let isRunning = context.state.stopwatch?.isRunning ?? false
-      let elapsed = context.state.stopwatch?.elapsed ?? "00:00"
-      return DynamicIsland {
-        DynamicIslandExpandedRegion(.leading) {
-          StopwatchExpandedLeadingView(
-            title: context.state.title,
-            subtitle: context.state.subtitle
-          )
-        }
-        DynamicIslandExpandedRegion(.trailing) {
-          StopwatchExpandedTrailingView(
-            isRunning: isRunning
-          )
-        }
-
-        DynamicIslandExpandedRegion(.bottom) {
-          StopwatchExpandedBottomView(elapsed: elapsed)
-        }
-
-      } compactLeading: {
-        StopwatchCompactLeadingView(elapsed: elapsed)
-
-      } compactTrailing: {
-        StopwatchCompactTrailingView(isRunning: isRunning)
-
-      } minimal: {
-        StopwatchMinimalView(isRunning: isRunning)
-      }
-    }
-  }
-
-  @ViewBuilder
-  private func compactTimer(
-    endDate: Double,
-    timerType: LiveActivityAttributes.DynamicIslandTimerType,
-    progressViewTint: String?
-  ) -> some View {
-    if timerType == .digital {
-      Text(timerInterval: Date.toTimerInterval(miliseconds: endDate))
-        .font(.system(size: 15))
-        .minimumScaleFactor(0.8)
-        .fontWeight(.semibold)
-        .frame(maxWidth: 60)
-        .multilineTextAlignment(.trailing)
-    } else {
-      circularTimer(endDate: endDate)
-        .tint(progressViewTint.map { Color(hex: $0) })
-    }
-  }
-
-  private func dynamicIslandExpandedLeading(title: String, subtitle: String?) -> some View {
-    VStack(alignment: .leading) {
-      Spacer()
-      Text(title)
-        .font(.title2)
-        .foregroundStyle(.white)
-        .fontWeight(.semibold)
-      if let subtitle {
-        Text(subtitle)
-          .font(.title3)
-          .minimumScaleFactor(0.8)
-          .foregroundStyle(.white.opacity(0.75))
-      }
-      Spacer()
-    }
-  }
-
-  private func dynamicIslandExpandedTrailing(imageName: String) -> some View {
-    VStack {
-      Spacer()
-      resizableImage(imageName: imageName)
-      Spacer()
-    }
-  }
-
-  private func dynamicIslandExpandedBottom(endDate: Double, progressViewTint: String?) -> some View {
-    ProgressView(timerInterval: Date.toTimerInterval(miliseconds: endDate))
-      .foregroundStyle(.white)
-      .tint(progressViewTint.map { Color(hex: $0) })
-      .padding(.top, 5)
-  }
-
-  private func circularTimer(endDate: Double) -> some View {
-    ProgressView(
-      timerInterval: Date.toTimerInterval(miliseconds: endDate),
-      countsDown: false,
-      label: { EmptyView() },
-      currentValueLabel: {
+      default:
         EmptyView()
       }
-    )
-    .progressViewStyle(.circular)
+
+    } dynamicIsland: { context in
+      switch context.state.mode {
+      case "stopwatch":
+        return buildStopwatchIsland(context: context)
+      case "timer":
+        return buildTimerIsland(context: context)
+      default:
+        return buildEmptyIsland()
+      }
+    }
+  }
+
+  // MARK: - STOPWATCH Dynamic Island
+  func buildStopwatchIsland(
+    context: ActivityViewContext<LiveActivityAttributes>
+  ) -> DynamicIsland {
+    let stopwatch = context.state.stopwatch
+    let isRunning = stopwatch?.isRunning ?? false
+    let elapsed = stopwatch?.elapsed ?? "00:00"
+    return DynamicIsland {
+      // Expanded - Leading
+      DynamicIslandExpandedRegion(.leading) {
+        StopwatchExpandedLeadingView(
+          title: context.state.title,
+          subtitle: context.state.subtitle
+        )
+      }
+      // Expanded - Trailing
+      DynamicIslandExpandedRegion(.trailing) {
+        StopwatchExpandedTrailingView(isRunning: isRunning)
+      }
+      // Expanded - Bottom
+      DynamicIslandExpandedRegion(.bottom) {
+        StopwatchExpandedBottomView(elapsed: elapsed)
+      }
+    } compactLeading: {
+      StopwatchCompactLeadingView(elapsed: elapsed)
+    } compactTrailing: {
+      StopwatchCompactTrailingView(isRunning: isRunning)
+    } minimal: {
+      StopwatchMinimalView(isRunning: isRunning)
+    }
+  }
+
+  // MARK: - Single Reusable EMPTY Dynamic Island
+  func buildEmptyIsland() -> DynamicIsland {
+    DynamicIsland {
+      DynamicIslandExpandedRegion(.center) {
+        EmptyView()
+      }
+    } compactLeading: {
+      EmptyView()
+    } compactTrailing: {
+      EmptyView()
+    } minimal: {
+      EmptyView()
+    }
+  }
+
+  // MARK: - TIMER Dynamic Island Builder
+  func buildTimerIsland(context: ActivityViewContext<LiveActivityAttributes>)
+    -> DynamicIsland
+  {
+    guard let timer = context.state.timer else { return buildEmptyIsland() }
+    let title = context.state.title
+    let subtitle = context.state.subtitle
+    let isRunning = timer.isRunning ?? false
+    let remaining = timer.remaining ?? 0
+
+    return DynamicIsland {
+      // EXPANDED — Leading
+      DynamicIslandExpandedRegion(.leading) {
+        TimerExpandedLeadingView(
+          title: title,
+          subtitle: subtitle
+        )
+      }
+      // EXPANDED — Trailing
+      DynamicIslandExpandedRegion(.trailing) {
+        TimerExpandedTrailingView(isRunning: isRunning)
+      }
+      // EXPANDED — Bottom
+      DynamicIslandExpandedRegion(.bottom) {
+        TimerExpandedBottomView(remaining: remaining)
+      }
+    } compactLeading: {
+      TimerCompactLeadingView(remaining: remaining)
+    } compactTrailing: {
+      TimerCompactTrailingView(isRunning: isRunning)
+    } minimal: {
+      TimerMinimalView(isRunning: isRunning)
+    }
   }
 }

@@ -7,65 +7,39 @@ public class ExpoLiveActivityModule: Module {
         @Field var subtitle: String?
         @Field var mode: String?
         @Field var stopwatch: Stopwatch?
+        @Field var timer: Timer?
 
         struct Stopwatch: Record {
-            @Field
-            var id: String?
-            @Field
-            var elapsed: String?
-            @Field
-            var isRunning: Bool?
+            @Field var id: String?
+            @Field var elapsed: String?
+            @Field var isRunning: Bool?
+        }
+        struct Timer: Record {
+            @Field var id: String?
+            @Field var duration: Double?
+            @Field var remaining: Double?
+            @Field var isRunning: Bool?
+            @Field var endsAt: Double?
         }
     }
 
     struct LiveActivityConfig: Record {
-        @Field
-        var backgroundColor: String?
-
-        @Field
-        var titleColor: String?
-
-        @Field
-        var subtitleColor: String?
-
-        @Field
-        var progressViewTint: String?
-
-        @Field
-        var progressViewLabelColor: String?
-
-        @Field
-        var deepLinkUrl: String?
-
-        @Field
-        var timerType: DynamicIslandTimerType?
-
-        @Field
-        var padding: Int?
-
-        @Field
-        var paddingDetails: PaddingDetails?
-
-        @Field
-        var imagePosition: String?
-
-        @Field
-        var imageWidth: Int?
-
-        @Field
-        var imageHeight: Int?
-
-        @Field
-        var imageWidthPercent: Double?
-
-        @Field
-        var imageHeightPercent: Double?
-
-        @Field
-        var imageAlign: String?
-
-        @Field
-        var contentFit: String?
+        @Field var backgroundColor: String?
+        @Field var titleColor: String?
+        @Field var subtitleColor: String?
+        @Field var progressViewTint: String?
+        @Field var progressViewLabelColor: String?
+        @Field var deepLinkUrl: String?
+        @Field var timerType: DynamicIslandTimerType?
+        @Field var padding: Int?
+        @Field var paddingDetails: PaddingDetails?
+        @Field var imagePosition: String?
+        @Field var imageWidth: Int?
+        @Field var imageHeight: Int?
+        @Field var imageWidthPercent: Double?
+        @Field var imageHeightPercent: Double?
+        @Field var imageAlign: String?
+        @Field var contentFit: String?
 
         struct PaddingDetails: Record {
             @Field var top: Int?
@@ -277,6 +251,13 @@ public class ExpoLiveActivityModule: Module {
                         elapsed: state.stopwatch?.elapsed,
                         isRunning: state.stopwatch?.isRunning ?? false
                     ),
+                    timer: LiveActivityAttributes.Timer(
+                            id: state.timer?.id,
+                            duration: state.timer?.duration,
+                            remaining: state.timer?.remaining,
+                            isRunning: state.timer?.isRunning ?? false,
+                            endsAt: state.timer?.endsAt
+                        )
                 )
 
                 let activity = try Activity.request(
@@ -324,6 +305,13 @@ public class ExpoLiveActivityModule: Module {
                         elapsed: state.stopwatch?.elapsed,
                         isRunning: state.stopwatch?.isRunning ?? false
                     ),
+                    timer: LiveActivityAttributes.Timer(
+                            id: state.timer?.id,
+                            duration: state.timer?.duration,
+                            remaining: state.timer?.remaining,
+                            isRunning: state.timer?.isRunning ?? false,
+                            endsAt: state.timer?.endsAt
+                        )
                 )
                 await activity.end(
                     ActivityContent(state: newState, staleDate: nil),
@@ -358,6 +346,13 @@ public class ExpoLiveActivityModule: Module {
                         elapsed: state.stopwatch?.elapsed,
                         isRunning: state.stopwatch?.isRunning ?? false
                     ),
+                    timer: LiveActivityAttributes.Timer(
+                            id: state.timer?.id,
+                            duration: state.timer?.duration,
+                            remaining: state.timer?.remaining,
+                            isRunning: state.timer?.isRunning ?? false,
+                            endsAt: state.timer?.endsAt
+                        )
                 )
                 await activity.update(
                     ActivityContent(state: newState, staleDate: nil)

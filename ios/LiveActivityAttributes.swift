@@ -7,6 +7,7 @@ struct LiveActivityAttributes: ActivityAttributes {
         var subtitle: String?
         var mode: String?
         var stopwatch: Stopwatch?
+        var timer: Timer?
     }
 
     var name: String
@@ -46,4 +47,13 @@ struct LiveActivityAttributes: ActivityAttributes {
         var elapsed: String?
         var isRunning: Bool?
     }
+    
+    struct Timer: Codable, Hashable {
+        var id: String?
+        var duration: Double?
+        var remaining: Double?
+        var isRunning: Bool?
+        var endsAt: Double?
+    }
+
 }

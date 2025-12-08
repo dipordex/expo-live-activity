@@ -6,17 +6,27 @@ type StopWatch = {
     elapsed?: string;
     id?: string;
 };
+
+type Timer = {
+    id?: string;
+    duration?: number;
+    remaining?: number;
+    isRunning?: boolean;
+    endsAt?: number;
+}
 export type LiveActivityState = {
     title: string;
     subtitle?: string;
     mode?: string;
     stopwatch?: StopWatch;
+    timer?: Timer;
 };
 export type NativeLiveActivityState = {
     title: string;
     subtitle?: string;
     mode?: string;
     stopwatch?: StopWatch;
+    timer?: Timer;
 };
 export type Padding = {
     top?: number;
