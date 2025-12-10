@@ -21,6 +21,7 @@ export type LiveActivityState = {
     mode?: string;
     stopwatch?: StopWatch;
     timer?: Timer;
+    showInDynamicIsland?: boolean;
 };
 export type NativeLiveActivityState = {
     title: string;
@@ -28,6 +29,7 @@ export type NativeLiveActivityState = {
     mode?: string;
     stopwatch?: StopWatch;
     timer?: Timer;
+    showInDynamicIsland?: boolean;
 };
 export type Padding = {
     top?: number;

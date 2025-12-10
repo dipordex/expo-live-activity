@@ -27,6 +27,8 @@ export type LiveActivityState = {
   subtitle?: string
   mode?: string
   stopwatch?: StopWatch
+  timer?: Timer
+  showInDynamicIsland?: boolean
 }
 
 export type NativeLiveActivityState = {
@@ -35,6 +37,7 @@ export type NativeLiveActivityState = {
   mode?: string
   stopwatch?: StopWatch
   timer?: Timer
+  showInDynamicIsland?: boolean
 }
 
 export type Padding =

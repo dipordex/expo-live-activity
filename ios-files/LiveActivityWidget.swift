@@ -9,6 +9,7 @@ struct LiveActivityAttributes: ActivityAttributes {
     var mode: String?
     var stopwatch: Stopwatch?
     var timer: Timer?
+    var showInDynamicIsland: Bool?
   }
 
   var name: String
@@ -47,6 +48,7 @@ struct LiveActivityAttributes: ActivityAttributes {
     var id: String?
     var elapsed: String?
     var isRunning: Bool?
+    var lapCount: Int?
   }
 
   struct Timer: Codable, Hashable {
@@ -64,7 +66,7 @@ struct LiveActivityWidget: Widget {
       switch context.state.mode {
       case "stopwatch":
         StopwatchLiveActivityView(
-          title: context.state.title,
+          title: context.state.title, activityId: context.activityID,
           stopwatch: context.state.stopwatch
         ).activityBackgroundTint(
           context.attributes.backgroundColor.map { Color(hex: $0) }
@@ -74,7 +76,7 @@ struct LiveActivityWidget: Widget {
       case "timer":
         TimerLiveActivityView(
           title: context.state.title,
-          timer: context.state.timer
+          timer: context.state.timer, activityId: context.activityID
         )
         .activityBackgroundTint(
           context.attributes.backgroundColor.map { Color(hex: $0) }
@@ -87,6 +89,9 @@ struct LiveActivityWidget: Widget {
       }
 
     } dynamicIsland: { context in
+     if context.state.showInDynamicIsland == false {
+        return buildEmptyIsland()
+      }
       switch context.state.mode {
       case "stopwatch":
         return buildStopwatchIsland(context: context)

@@ -8,6 +8,7 @@ struct LiveActivityAttributes: ActivityAttributes {
         var mode: String?
         var stopwatch: Stopwatch?
         var timer: Timer?
+        var showInDynamicIsland: Bool?
     }
 
     var name: String

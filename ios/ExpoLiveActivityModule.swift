@@ -8,6 +8,7 @@ public class ExpoLiveActivityModule: Module {
         @Field var mode: String?
         @Field var stopwatch: Stopwatch?
         @Field var timer: Timer?
+        @Field var showInDynamicIsland: Bool?
 
         struct Stopwatch: Record {
             @Field var id: String?
@@ -320,7 +321,8 @@ public class ExpoLiveActivityModule: Module {
                         remaining: state.timer?.remaining,
                         isRunning: state.timer?.isRunning ?? false,
                         endsAt: state.timer?.endsAt
-                    )
+                    ),
+                    showInDynamicIsland: state.showInDynamicIsland ?? false
                 )
 
                 let activity = try Activity.request(
@@ -375,7 +377,8 @@ public class ExpoLiveActivityModule: Module {
                         remaining: state.timer?.remaining,
                         isRunning: state.timer?.isRunning ?? false,
                         endsAt: state.timer?.endsAt
-                    )
+                    ),
+                    showInDynamicIsland: state.showInDynamicIsland ?? false
                 )
                 await activity.end(
                     ActivityContent(state: newState, staleDate: nil),
@@ -417,7 +420,8 @@ public class ExpoLiveActivityModule: Module {
                         remaining: state.timer?.remaining,
                         isRunning: state.timer?.isRunning ?? false,
                         endsAt: state.timer?.endsAt
-                    )
+                    ),
+                    showInDynamicIsland: state.showInDynamicIsland ?? false
                 )
                 await activity.update(
                     ActivityContent(state: newState, staleDate: nil)

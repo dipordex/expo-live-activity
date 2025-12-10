@@ -13,6 +13,7 @@ import WidgetKit
 struct TimerLiveActivityView: View {
   let title: String
   let timer: LiveActivityAttributes.Timer?
+  let activityId: String
 
   var isRunning: Bool { timer?.isRunning ?? false }
   var remaining: Double { timer?.remaining ?? 0 }
@@ -44,8 +45,32 @@ struct TimerLiveActivityView: View {
 
         Spacer()
 
-        CircleButton(symbol: isRunning ? "pause.fill" : "play.fill")
-        CircleButton(symbol: "stop.fill")
+        if (timer?.remaining ?? 0) > 0 {
+          if isRunning {
+            CircleButton(
+              symbol: "pause.fill",
+              intent: PauseTimerIntent(
+                activityId: activityId,
+                timerId: timer?.id ?? ""
+              )
+            )
+          } else {
+            CircleButton(
+              symbol: "play.fill",
+              intent: ResumeTimerIntent(
+                activityId: activityId,
+                timerId: timer?.id ?? ""
+              )
+            )
+          }
+        }
+        CircleButton(
+          symbol: "stop.fill",
+          intent: StopTimerIntent(
+            activityId: activityId,
+            timerId: timer?.id ?? ""
+          )
+        )
       }
     }
     .padding(20)
