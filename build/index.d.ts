@@ -5,6 +5,7 @@ type StopWatch = {
     isRunning?: boolean;
     elapsed?: string;
     id?: string;
+    lapCount?: number;
 };
 
 type Timer = {
@@ -71,11 +72,16 @@ export type ActivityUpdateEvent = {
     activityID: string;
     activityName: string;
     activityState: ActivityState;
+    activityAction?: string;
+    stopwatchId?: string;
+    timerId?: string;
+    mode?: string;
 };
 export type LiveActivityModuleEvents = {
     onTokenReceived: (params: ActivityTokenReceivedEvent) => void;
     onPushToStartTokenReceived: (params: ActivityPushToStartTokenReceivedEvent) => void;
     onStateChange: (params: ActivityUpdateEvent) => void;
+    onButtonPressed: (params: ActivityUpdateEvent) => void;
 };
 /**
  * @param {LiveActivityState} state The state for the live activity.
@@ -96,5 +102,6 @@ export declare function updateActivity(id: string, state: LiveActivityState): an
 export declare function addActivityTokenListener(listener: (event: ActivityTokenReceivedEvent) => void): Voidable<EventSubscription>;
 export declare function addActivityPushToStartTokenListener(listener: (event: ActivityPushToStartTokenReceivedEvent) => void): Voidable<EventSubscription>;
 export declare function addActivityUpdatesListener(listener: (event: ActivityUpdateEvent) => void): Voidable<EventSubscription>;
+export declare function addActivityActionListener(listener: (event: ActivityUpdateEvent) => void): Voidable<EventSubscription>;
 export {};
 //# sourceMappingURL=index.d.ts.map

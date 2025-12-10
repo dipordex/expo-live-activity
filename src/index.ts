@@ -11,6 +11,7 @@ type StopWatch = {
   isRunning?: boolean
   elapsed?: string
   id?: string
+  lapCount?: number
 }
 
 type Timer = {
@@ -90,6 +91,10 @@ export type ActivityUpdateEvent = {
   activityID: string
   activityName: string
   activityState: ActivityState
+  activityAction?: string
+  stopwatchId?: string
+  timerId?: string
+  mode?: string
 }
 
 export type LiveActivityModuleEvents = {
@@ -200,4 +205,10 @@ export function addActivityUpdatesListener(
   listener: (event: ActivityUpdateEvent) => void
 ): Voidable<EventSubscription> {
   if (assertIOS('addActivityUpdatesListener')) return ExpoLiveActivityModule.addListener('onStateChange', listener)
+}
+
+export function addActivityActionListener(
+  listener: (event: ActivityUpdateEvent) => void
+): Voidable<EventSubscription> {
+  if (assertIOS('addActivityActionListener')) return ExpoLiveActivityModule.addListener('onButtonPressed', listener)
 }

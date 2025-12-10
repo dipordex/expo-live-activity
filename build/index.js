@@ -86,4 +86,8 @@ export function addActivityUpdatesListener(listener) {
     if (assertIOS('addActivityUpdatesListener'))
         return ExpoLiveActivityModule.addListener('onStateChange', listener);
 }
+export function addActivityActionListener(listener) {
+    if (assertIOS('addActivityActionListener'))
+        return ExpoLiveActivityModule.addListener('onButtonPressed', listener);
+}
 //# sourceMappingURL=index.js.map

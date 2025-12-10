@@ -13,6 +13,7 @@ public class ExpoLiveActivityModule: Module {
             @Field var id: String?
             @Field var elapsed: String?
             @Field var isRunning: Bool?
+            @Field var lapCount: Int?
         }
         struct Timer: Record {
             @Field var id: String?
@@ -186,6 +187,59 @@ public class ExpoLiveActivityModule: Module {
             ?? false
     }
 
+    func observeDarwinNotifications() {
+        let callback: CFNotificationCallback = { _, _, _, _, _ in
+            DispatchQueue.main.async {
+                ExpoLiveActivityModule.shared?.readAppGroupPayload()
+            }
+        }
+
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque()),
+            callback,
+            "setInc.app.liveactivity.button" as CFString,
+            nil,
+            .deliverImmediately
+        )
+    }
+
+    @objc
+    func readAppGroupPayload() {
+        let defaults = UserDefaults(suiteName: "group.setInc.app.shared")
+
+        guard
+            let payload = defaults?.dictionary(forKey: "LA_Payload")
+                as? [String: String]
+        else {
+            return
+        }
+
+        let activityId = payload["activityId"] ?? ""
+        let stopwatchId = payload["stopwatchId"] ?? ""
+        let timerId = payload["timerId"] ?? ""
+        let action = payload["action"] ?? ""
+        let mode = payload["mode"] ?? ""
+        print(
+            "Received activity Action: \(activityId), \(action), stopwatchId: \(stopwatchId)"
+        )
+        sendEvent(
+            "onButtonPressed",
+            [
+                "activityID": activityId,
+                "stopwatchId": stopwatchId,
+                "activityAction": action,
+                "timerId": timerId,
+                "mode": mode,
+            ]
+        )
+
+        // Clean up
+        defaults?.removeObject(forKey: "LA_Payload")
+    }
+
+    public static var shared: ExpoLiveActivityModule?
+
     public func definition() -> ModuleDefinition {
         Name("ExpoLiveActivity")
 
@@ -194,9 +248,16 @@ public class ExpoLiveActivityModule: Module {
                 observePushToStartToken()
             }
             observeLiveActivityUpdates()
+            ExpoLiveActivityModule.shared = self
+            observeDarwinNotifications()
         }
 
-        Events("onTokenReceived", "onPushToStartTokenReceived", "onStateChange")
+        Events(
+            "onTokenReceived",
+            "onPushToStartTokenReceived",
+            "onStateChange",
+            "onButtonPressed"
+        )
 
         Function("startActivity") {
             (state: LiveActivityState, maybeConfig: LiveActivityConfig?)
@@ -249,15 +310,17 @@ public class ExpoLiveActivityModule: Module {
                     stopwatch: LiveActivityAttributes.Stopwatch(
                         id: state.stopwatch?.id,
                         elapsed: state.stopwatch?.elapsed,
-                        isRunning: state.stopwatch?.isRunning ?? false
+                        isRunning: state.stopwatch?.isRunning ?? false,
+                        lapCount: state.stopwatch?.lapCount
+                        
                     ),
                     timer: LiveActivityAttributes.Timer(
-                            id: state.timer?.id,
-                            duration: state.timer?.duration,
-                            remaining: state.timer?.remaining,
-                            isRunning: state.timer?.isRunning ?? false,
-                            endsAt: state.timer?.endsAt
-                        )
+                        id: state.timer?.id,
+                        duration: state.timer?.duration,
+                        remaining: state.timer?.remaining,
+                        isRunning: state.timer?.isRunning ?? false,
+                        endsAt: state.timer?.endsAt
+                    )
                 )
 
                 let activity = try Activity.request(
@@ -303,15 +366,16 @@ public class ExpoLiveActivityModule: Module {
                     stopwatch: LiveActivityAttributes.Stopwatch(
                         id: state.stopwatch?.id,
                         elapsed: state.stopwatch?.elapsed,
-                        isRunning: state.stopwatch?.isRunning ?? false
+                        isRunning: state.stopwatch?.isRunning ?? false,
+                        lapCount: state.stopwatch?.lapCount
                     ),
                     timer: LiveActivityAttributes.Timer(
-                            id: state.timer?.id,
-                            duration: state.timer?.duration,
-                            remaining: state.timer?.remaining,
-                            isRunning: state.timer?.isRunning ?? false,
-                            endsAt: state.timer?.endsAt
-                        )
+                        id: state.timer?.id,
+                        duration: state.timer?.duration,
+                        remaining: state.timer?.remaining,
+                        isRunning: state.timer?.isRunning ?? false,
+                        endsAt: state.timer?.endsAt
+                    )
                 )
                 await activity.end(
                     ActivityContent(state: newState, staleDate: nil),
@@ -335,7 +399,7 @@ public class ExpoLiveActivityModule: Module {
 
             Task {
                 print(
-                    "Updating activity with id: \(state.stopwatch?.elapsed ?? "nil")"
+                    "Updating activity with id: \(state.stopwatch?.id ?? "nil")"
                 )
                 let newState = LiveActivityAttributes.ContentState(
                     title: state.title,
@@ -344,15 +408,16 @@ public class ExpoLiveActivityModule: Module {
                     stopwatch: LiveActivityAttributes.Stopwatch(
                         id: state.stopwatch?.id,
                         elapsed: state.stopwatch?.elapsed,
-                        isRunning: state.stopwatch?.isRunning ?? false
+                        isRunning: state.stopwatch?.isRunning ?? false,
+                        lapCount: state.stopwatch?.lapCount
                     ),
                     timer: LiveActivityAttributes.Timer(
-                            id: state.timer?.id,
-                            duration: state.timer?.duration,
-                            remaining: state.timer?.remaining,
-                            isRunning: state.timer?.isRunning ?? false,
-                            endsAt: state.timer?.endsAt
-                        )
+                        id: state.timer?.id,
+                        duration: state.timer?.duration,
+                        remaining: state.timer?.remaining,
+                        isRunning: state.timer?.isRunning ?? false,
+                        endsAt: state.timer?.endsAt
+                    )
                 )
                 await activity.update(
                     ActivityContent(state: newState, staleDate: nil)

@@ -1,12 +1,15 @@
 import ActivityKit
+import AppIntents
 import SwiftUI
 import WidgetKit
 
 struct StopwatchLiveActivityView: View {
   let title: String
+  let activityId: String
   let stopwatch: LiveActivityAttributes.Stopwatch?
+
   var isRunning: Bool { stopwatch?.isRunning ?? false }
-  var elapsedText: String { return stopwatch?.elapsed ?? "00:00" }
+  var elapsedText: String { stopwatch?.elapsed ?? "00:00" }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -15,6 +18,7 @@ struct StopwatchLiveActivityView: View {
         Image(systemName: "stopwatch")
           .font(.system(size: 16, weight: .semibold))
           .foregroundStyle(.white.opacity(0.9))
+
         Text(title)
           .font(.title3)
           .foregroundStyle(.white.opacity(0.9))
@@ -25,28 +29,55 @@ struct StopwatchLiveActivityView: View {
       }
 
       HStack(spacing: 16) {
-        // Timer Text
         Text(elapsedText)
           .font(.system(size: 28, weight: .semibold, design: .rounded))
           .monospacedDigit()
           .foregroundStyle(.white)
 
         Spacer()
+        if let laps = stopwatch?.lapCount, laps > 0 {
+          Text("Lap: \(laps)")
+            .font(.system(size: 18, weight: .regular, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(.white)
+        }
 
-        // Play/Pause Button (iOS 17 interactive)
-        CircleButton(
-          symbol: isRunning ? "pause.fill" : "play.fill",
-          intent: nil,
-          deepLink: nil
-        )
-
-        // Lap Button (only when running)
         if isRunning {
           CircleButton(
-            symbol: "flag.fill",
-            intent: nil,
+            symbol: "pause.fill",
+            intent: PauseStopwatchIntent(
+              activityId: activityId,
+              stopwatchId: stopwatch?.id ?? ""
+            ),
             deepLink: nil
           )
+          
+           CircleButton(
+            symbol: "flag.fill",
+            intent: LapStopwatchIntent(
+              activityId: activityId,
+              stopwatchId: stopwatch?.id ?? ""
+            ),
+            deepLink: nil
+          )
+        } else {
+          CircleButton(
+            symbol: "play.fill",
+            intent: StartStopwatchIntent(
+              activityId: activityId,
+              stopwatchId: stopwatch?.id ?? ""
+            ),
+            deepLink: nil
+          )
+          CircleButton(
+            symbol: "arrow.trianglehead.clockwise.rotate.90",
+            intent: ResetStopwatchIntent(
+              activityId: activityId,
+              stopwatchId: stopwatch?.id ?? ""
+            ),
+            deepLink: nil
+          )
+
         }
       }
     }

@@ -46,6 +46,7 @@ struct LiveActivityAttributes: ActivityAttributes {
         var id: String?
         var elapsed: String?
         var isRunning: Bool?
+        var lapCount: Int?
     }
     
     struct Timer: Codable, Hashable {
