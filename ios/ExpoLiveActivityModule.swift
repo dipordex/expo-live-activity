@@ -11,10 +11,11 @@ public class ExpoLiveActivityModule: Module {
         @Field var showInDynamicIsland: Bool?
 
         struct Stopwatch: Record {
-            @Field var id: String?
-            @Field var elapsed: String?
-            @Field var isRunning: Bool?
-            @Field var lapCount: Int?
+            @Field var id: String
+            @Field var startedAt: Date?
+            @Field var accumulated: TimeInterval
+            @Field var isRunning: Bool
+            @Field var lapCount: Int
         }
         struct Timer: Record {
             @Field var id: String?
@@ -42,6 +43,8 @@ public class ExpoLiveActivityModule: Module {
         @Field var imageHeightPercent: Double?
         @Field var imageAlign: String?
         @Field var contentFit: String?
+        @Field var apiEndpoint: ApiEndpoint?
+        @Field var accessToken: String?
 
         struct PaddingDetails: Record {
             @Field var top: Int?
@@ -50,6 +53,15 @@ public class ExpoLiveActivityModule: Module {
             @Field var right: Int?
             @Field var vertical: Int?
             @Field var horizontal: Int?
+        }
+        
+        struct ApiEndpoint: Record {
+            @Field var stopwatchEndpoints: StopwatchEndpoints?
+        }
+        
+        struct StopwatchEndpoints: Record {
+            @Field var common: String
+            @Field var lap: String
         }
     }
 
@@ -301,7 +313,9 @@ public class ExpoLiveActivityModule: Module {
                     imageWidthPercent: config.imageWidthPercent,
                     imageHeightPercent: config.imageHeightPercent,
                     imageAlign: config.imageAlign,
-                    contentFit: config.contentFit
+                    contentFit: config.contentFit,
+                    apiEndpoint: LiveActivityAttributes.ApiEndpoint(from: config.apiEndpoint),
+                    accessToken: config.accessToken
                 )
 
                 let initialState = LiveActivityAttributes.ContentState(
@@ -309,10 +323,11 @@ public class ExpoLiveActivityModule: Module {
                     subtitle: state.subtitle,
                     mode: state.mode,
                     stopwatch: LiveActivityAttributes.Stopwatch(
-                        id: state.stopwatch?.id,
-                        elapsed: state.stopwatch?.elapsed,
+                        id: state.stopwatch?.id ?? "",
+                        startedAt: state.stopwatch?.startedAt,
+                        accumulated: state.stopwatch?.accumulated ?? 0,
                         isRunning: state.stopwatch?.isRunning ?? false,
-                        lapCount: state.stopwatch?.lapCount
+                        lapCount: state.stopwatch?.lapCount ?? 0
                         
                     ),
                     timer: LiveActivityAttributes.Timer(
@@ -327,8 +342,7 @@ public class ExpoLiveActivityModule: Module {
 
                 let activity = try Activity.request(
                     attributes: attributes,
-                    content: .init(state: initialState, staleDate: nil),
-                    pushType: pushNotificationsEnabled ? .token : nil
+                    content: .init(state: initialState, staleDate: nil)
                 )
 
                 Task {
@@ -358,18 +372,16 @@ public class ExpoLiveActivityModule: Module {
             else { throw ActivityNotFoundException(activityId) }
 
             Task {
-                print(
-                    "Stopping activity with id: \(state.stopwatch?.elapsed ?? "nil")"
-                )
                 let newState = LiveActivityAttributes.ContentState(
                     title: state.title,
                     subtitle: state.subtitle,
                     mode: state.mode,
                     stopwatch: LiveActivityAttributes.Stopwatch(
-                        id: state.stopwatch?.id,
-                        elapsed: state.stopwatch?.elapsed,
+                        id: state.stopwatch?.id ?? "",
+                        startedAt: state.stopwatch?.startedAt,
+                        accumulated: state.stopwatch?.accumulated ?? 0,
                         isRunning: state.stopwatch?.isRunning ?? false,
-                        lapCount: state.stopwatch?.lapCount
+                        lapCount: state.stopwatch?.lapCount ?? 0
                     ),
                     timer: LiveActivityAttributes.Timer(
                         id: state.timer?.id,
@@ -409,10 +421,11 @@ public class ExpoLiveActivityModule: Module {
                     subtitle: state.subtitle,
                     mode: state.mode,
                     stopwatch: LiveActivityAttributes.Stopwatch(
-                        id: state.stopwatch?.id,
-                        elapsed: state.stopwatch?.elapsed,
+                        id: state.stopwatch?.id ?? "",
+                        startedAt: state.stopwatch?.startedAt,
+                        accumulated: state.stopwatch?.accumulated ?? 0,
                         isRunning: state.stopwatch?.isRunning ?? false,
-                        lapCount: state.stopwatch?.lapCount
+                        lapCount: state.stopwatch?.lapCount ?? 0
                     ),
                     timer: LiveActivityAttributes.Timer(
                         id: state.timer?.id,
@@ -428,5 +441,23 @@ public class ExpoLiveActivityModule: Module {
                 )
             }
         }
+    }
+}
+
+extension LiveActivityAttributes.ApiEndpoint {
+    init(from configApi: ExpoLiveActivityModule.LiveActivityConfig.ApiEndpoint?) {
+        self.stopwatchEndpoints = configApi?.stopwatchEndpoints.map { endpoints in
+            LiveActivityAttributes.StopwatchEndpoints(
+                common: endpoints.common,
+                lap: endpoints.lap
+            )
+        }
+    }
+}
+
+extension LiveActivityAttributes.StopwatchEndpoints {
+    init(from configEndpoints: ExpoLiveActivityModule.LiveActivityConfig.StopwatchEndpoints) {
+        self.common = configEndpoints.common
+        self.lap = configEndpoints.lap
     }
 }

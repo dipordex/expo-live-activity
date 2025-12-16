@@ -28,6 +28,8 @@ struct LiveActivityAttributes: ActivityAttributes {
     var imageHeightPercent: Double?
     var imageAlign: String?
     var contentFit: String?
+    var apiEndpoint: ApiEndpoint?
+    var accessToken: String?
 
     enum DynamicIslandTimerType: String, Codable {
         case circular
@@ -44,10 +46,19 @@ struct LiveActivityAttributes: ActivityAttributes {
     }
     
     struct Stopwatch: Codable, Hashable {
-        var id: String?
-        var elapsed: String?
-        var isRunning: Bool?
-        var lapCount: Int?
+        var id: String
+        var startedAt: Date?
+        var accumulated: TimeInterval
+        var isRunning: Bool
+        var lapCount: Int
+        
+        init(id: String, startedAt: Date? = nil, accumulated: TimeInterval = 0, isRunning: Bool, lapCount: Int = 0) {
+            self.id = id
+            self.startedAt = startedAt
+            self.accumulated = accumulated
+            self.isRunning = isRunning
+            self.lapCount = lapCount
+        }
     }
     
     struct Timer: Codable, Hashable {
@@ -56,6 +67,15 @@ struct LiveActivityAttributes: ActivityAttributes {
         var remaining: Double?
         var isRunning: Bool?
         var endsAt: Double?
+    }
+    
+    struct ApiEndpoint: Codable, Hashable {
+        var stopwatchEndpoints: StopwatchEndpoints?
+    }
+    
+    struct StopwatchEndpoints: Codable, Hashable {
+        var common: String
+        var lap: String
     }
 
 }

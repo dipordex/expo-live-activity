@@ -9,11 +9,10 @@ struct StopwatchLiveActivityView: View {
   let stopwatch: LiveActivityAttributes.Stopwatch?
 
   var isRunning: Bool { stopwatch?.isRunning ?? false }
-  var elapsedText: String { stopwatch?.elapsed ?? "00:00" }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
-
+      // HEADER
       HStack(spacing: 8) {
         Image(systemName: "stopwatch")
           .font(.system(size: 16, weight: .semibold))
@@ -28,13 +27,32 @@ struct StopwatchLiveActivityView: View {
         }
       }
 
+      // CONTENT
       HStack(spacing: 16) {
-        Text(elapsedText)
-          .font(.system(size: 28, weight: .semibold, design: .rounded))
-          .monospacedDigit()
-          .foregroundStyle(.white)
+        // TIME DISPLAY
+        if let sw = stopwatch {
+          if isRunning {
+            Text(runningStartDate(sw), style: .timer)
+              .font(.system(size: 28, weight: .semibold, design: .rounded))
+              .monospacedDigit()
+              .foregroundStyle(.white)
+          } else {
+            // PAUSED / RESET (STATIC)
+            Text(formatTime(sw.accumulated))
+              .font(.system(size: 28, weight: .semibold, design: .rounded))
+              .monospacedDigit()
+              .foregroundStyle(.white)
+          }
+        } else {
+          Text("00:00")
+            .font(.system(size: 28, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(.white)
+        }
 
         Spacer()
+
+        // LAPS
         if let laps = stopwatch?.lapCount, laps > 0 {
           Text("Lap: \(laps)")
             .font(.system(size: 18, weight: .regular, design: .rounded))
@@ -42,6 +60,7 @@ struct StopwatchLiveActivityView: View {
             .foregroundStyle(.white)
         }
 
+        // ACTION BUTTONS
         if isRunning {
           CircleButton(
             symbol: "pause.fill",
@@ -51,8 +70,8 @@ struct StopwatchLiveActivityView: View {
             ),
             deepLink: nil
           )
-          
-           CircleButton(
+
+          CircleButton(
             symbol: "flag.fill",
             intent: LapStopwatchIntent(
               activityId: activityId,
@@ -69,6 +88,7 @@ struct StopwatchLiveActivityView: View {
             ),
             deepLink: nil
           )
+
           CircleButton(
             symbol: "arrow.trianglehead.clockwise.rotate.90",
             intent: ResetStopwatchIntent(
@@ -77,13 +97,13 @@ struct StopwatchLiveActivityView: View {
             ),
             deepLink: nil
           )
-
         }
       }
     }
     .padding(20)
     .background(.black.opacity(0.35))
     .clipShape(RoundedRectangle(cornerRadius: 20))
+
   }
 }
 
@@ -109,13 +129,22 @@ struct StopwatchMinimalView: View {
 
 // MARK: - COMPACT LEADING VIEW
 struct StopwatchCompactLeadingView: View {
-  let elapsed: String
+  let isRunning: Bool
+  let startDate: Date
+  let accumulated: TimeInterval
 
   var body: some View {
-    Text(elapsed)
-      .font(.caption)
-      .foregroundStyle(.white)
-      .monospacedDigit()
+    if isRunning {
+      Text(startDate, style: .timer)
+        .font(.caption)
+        .monospacedDigit()
+        .foregroundStyle(.white)
+    } else {
+      Text(formatTime(accumulated))
+        .font(.caption)
+        .monospacedDigit()
+        .foregroundStyle(.white.opacity(0.7))
+    }
   }
 }
 
@@ -175,13 +204,21 @@ struct StopwatchExpandedTrailingView: View {
 
 // MARK: - EXPANDED BOTTOM VIEW
 struct StopwatchExpandedBottomView: View {
-  let elapsed: String
+  let isRunning: Bool
+  let startDate: Date
+  let accumulated: TimeInterval
 
   var body: some View {
-    Text(elapsed)
-      .font(.system(size: 34, weight: .semibold, design: .rounded))
-      .foregroundStyle(.white)
-      .monospacedDigit()
-      .padding(.vertical, 8)
+    if isRunning {
+      Text(startDate, style: .timer)
+        .font(.system(size: 34, weight: .semibold, design: .rounded))
+        .monospacedDigit()
+        .foregroundStyle(.white)
+    } else {
+      Text(formatTime(accumulated))
+        .font(.system(size: 34, weight: .semibold, design: .rounded))
+        .monospacedDigit()
+        .foregroundStyle(.white)
+    }
   }
 }

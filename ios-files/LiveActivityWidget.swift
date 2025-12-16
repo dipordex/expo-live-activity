@@ -10,6 +10,22 @@ struct LiveActivityAttributes: ActivityAttributes {
     var stopwatch: Stopwatch?
     var timer: Timer?
     var showInDynamicIsland: Bool?
+
+    init(
+      title: String,
+      subtitle: String? = nil,
+      mode: String? = nil,
+      stopwatch: Stopwatch? = nil,
+      timer: Timer? = nil,
+      showInDynamicIsland: Bool? = nil
+    ) {
+      self.title = title
+      self.subtitle = subtitle
+      self.mode = mode
+      self.stopwatch = stopwatch
+      self.timer = timer
+      self.showInDynamicIsland = showInDynamicIsland
+    }
   }
 
   var name: String
@@ -29,6 +45,8 @@ struct LiveActivityAttributes: ActivityAttributes {
   var imageHeightPercent: Double?
   var imageAlign: String?
   var contentFit: String?
+  var apiEndpoint: ApiEndpoint?
+  var accessToken: String?
 
   enum DynamicIslandTimerType: String, Codable {
     case circular
@@ -45,10 +63,19 @@ struct LiveActivityAttributes: ActivityAttributes {
   }
 
   struct Stopwatch: Codable, Hashable {
-    var id: String?
-    var elapsed: String?
-    var isRunning: Bool?
-    var lapCount: Int?
+    var id: String
+    var startedAt: Date?
+    var accumulated: TimeInterval
+    var isRunning: Bool
+    var lapCount: Int
+    
+    init(id: String, startedAt: Date? = Date(), accumulated: TimeInterval = 0, isRunning: Bool, lapCount: Int = 0) {
+      self.id = id
+      self.startedAt = startedAt
+      self.accumulated = accumulated
+      self.isRunning = isRunning
+      self.lapCount = lapCount
+    }
   }
 
   struct Timer: Codable, Hashable {
@@ -58,15 +85,25 @@ struct LiveActivityAttributes: ActivityAttributes {
     var isRunning: Bool?
     var endsAt: Double?
   }
+  
+  struct ApiEndpoint: Codable, Hashable {
+      var stopwatchEndpoints: StopwatchEndpoints?
+  }
+  
+  struct StopwatchEndpoints: Codable, Hashable {
+      var common: String
+      var lap: String
+  }
 }
-
+@available(iOS 16.2, *)
 struct LiveActivityWidget: Widget {
   var body: some WidgetConfiguration {
     ActivityConfiguration(for: LiveActivityAttributes.self) { context in
       switch context.state.mode {
       case "stopwatch":
         StopwatchLiveActivityView(
-          title: context.state.title, activityId: context.activityID,
+          title: context.state.title,
+          activityId: context.activityID,
           stopwatch: context.state.stopwatch
         ).activityBackgroundTint(
           context.attributes.backgroundColor.map { Color(hex: $0) }
@@ -76,7 +113,8 @@ struct LiveActivityWidget: Widget {
       case "timer":
         TimerLiveActivityView(
           title: context.state.title,
-          timer: context.state.timer, activityId: context.activityID
+          timer: context.state.timer,
+          activityId: context.activityID
         )
         .activityBackgroundTint(
           context.attributes.backgroundColor.map { Color(hex: $0) }
@@ -89,7 +127,7 @@ struct LiveActivityWidget: Widget {
       }
 
     } dynamicIsland: { context in
-     if context.state.showInDynamicIsland == false {
+      if context.state.showInDynamicIsland == false {
         return buildEmptyIsland()
       }
       switch context.state.mode {
@@ -109,7 +147,9 @@ struct LiveActivityWidget: Widget {
   ) -> DynamicIsland {
     let stopwatch = context.state.stopwatch
     let isRunning = stopwatch?.isRunning ?? false
-    let elapsed = stopwatch?.elapsed ?? "00:00"
+    let startedAt = stopwatch?.startedAt ?? Date()
+    let accumulated = stopwatch?.accumulated ?? 0
+    
     return DynamicIsland {
       // Expanded - Leading
       DynamicIslandExpandedRegion(.leading) {
@@ -124,10 +164,10 @@ struct LiveActivityWidget: Widget {
       }
       // Expanded - Bottom
       DynamicIslandExpandedRegion(.bottom) {
-        StopwatchExpandedBottomView(elapsed: elapsed)
+        StopwatchExpandedBottomView(isRunning: isRunning, startDate: startedAt, accumulated: accumulated)
       }
     } compactLeading: {
-      StopwatchCompactLeadingView(elapsed: elapsed)
+      StopwatchCompactLeadingView(isRunning: isRunning, startDate: startedAt, accumulated: accumulated)
     } compactTrailing: {
       StopwatchCompactTrailingView(isRunning: isRunning)
     } minimal: {

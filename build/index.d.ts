@@ -2,11 +2,12 @@ import { EventSubscription } from 'expo-modules-core';
 type Voidable<T> = T | void;
 export type DynamicIslandTimerType = 'circular' | 'digital';
 type StopWatch = {
-    isRunning?: boolean;
-    elapsed?: string;
-    id?: string;
-    lapCount?: number;
-};
+    id: string;
+    startedAt: number | null;
+    accumulated: number;
+    isRunning: boolean;
+    lapCount: number;
+}
 
 type Timer = {
     id?: string;
@@ -60,6 +61,8 @@ export type LiveActivityConfig = {
     imageAlign?: ImageAlign;
     imageSize?: ImageSize;
     contentFit?: ImageContentFit;
+    apiEndpoint?: ApiEndpoint
+    accessToken?: string
 };
 export type ActivityTokenReceivedEvent = {
     activityID: string;
@@ -69,6 +72,16 @@ export type ActivityTokenReceivedEvent = {
 export type ActivityPushToStartTokenReceivedEvent = {
     activityPushToStartToken: string;
 };
+
+type ApiEndpoint = {
+  stopwatchEndpoints?: StopwatchEndpoints
+}
+
+type StopwatchEndpoints = {
+  common: String
+  lap: String
+}
+
 type ActivityState = 'active' | 'dismissed' | 'pending' | 'stale' | 'ended';
 export type ActivityUpdateEvent = {
     activityID: string;
@@ -105,5 +118,5 @@ export declare function addActivityTokenListener(listener: (event: ActivityToken
 export declare function addActivityPushToStartTokenListener(listener: (event: ActivityPushToStartTokenReceivedEvent) => void): Voidable<EventSubscription>;
 export declare function addActivityUpdatesListener(listener: (event: ActivityUpdateEvent) => void): Voidable<EventSubscription>;
 export declare function addActivityActionListener(listener: (event: ActivityUpdateEvent) => void): Voidable<EventSubscription>;
-export {};
+export { };
 //# sourceMappingURL=index.d.ts.map

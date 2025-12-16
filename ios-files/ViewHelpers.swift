@@ -31,3 +31,34 @@ extension View {
     onPreferenceChange(ContainerSizeKey.self, perform: perform)
   }
 }
+
+//MARK: Helpers Functions
+
+func formatTime(_ seconds: TimeInterval) -> String {
+  let total = max(0, Int(seconds))
+  let h = total / 3600
+  let m = (total % 3600) / 60
+  let s = total % 60
+  return h > 0
+    ? String(format: "%02d:%02d:%02d", h, m, s)
+    : String(format: "%02d:%02d", m, s)
+}
+
+func runningStartDate(_ sw: LiveActivityAttributes.Stopwatch) -> Date
+{
+  guard let startedAt = sw.startedAt else {
+    return Date()
+  }
+  return startedAt.addingTimeInterval(-sw.accumulated)
+}
+
+extension Date {
+  static func fromISO8601(_ value: String) -> Date? {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [
+      .withInternetDateTime,
+      .withFractionalSeconds
+    ]
+    return formatter.date(from: value)
+  }
+}
