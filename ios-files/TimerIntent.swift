@@ -38,7 +38,7 @@ private func postDarwinNotification(
 
 // MARK: - Start Intent
 
-struct ResumeTimerIntent: AppIntent {
+struct ResumeTimerIntent: LiveActivityIntent {
 
   static var title: LocalizedStringResource = "Resume"
 
@@ -67,7 +67,7 @@ struct ResumeTimerIntent: AppIntent {
 
 // MARK: - Pause Intent
 
-struct PauseTimerIntent: AppIntent {
+struct PauseTimerIntent: LiveActivityIntent {
   static var title: LocalizedStringResource = "Pause"
 
   @Parameter(title: "Activity ID")
@@ -94,7 +94,7 @@ struct PauseTimerIntent: AppIntent {
 
 // MARK: - Reset Intent
 
-struct StopTimerIntent: AppIntent {
+struct StopTimerIntent: LiveActivityIntent {
   static var title: LocalizedStringResource = "Stop"
   @Parameter(title: "Activity ID")
   var activityId: String

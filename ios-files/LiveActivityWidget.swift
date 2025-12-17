@@ -149,6 +149,7 @@ struct LiveActivityWidget: Widget {
     let isRunning = stopwatch?.isRunning ?? false
     let startedAt = stopwatch?.startedAt ?? Date()
     let accumulated = stopwatch?.accumulated ?? 0
+    let activityId = context.activityID
     
     return DynamicIsland {
       // Expanded - Leading
@@ -160,7 +161,7 @@ struct LiveActivityWidget: Widget {
       }
       // Expanded - Trailing
       DynamicIslandExpandedRegion(.trailing) {
-        StopwatchExpandedTrailingView(isRunning: isRunning)
+        StopwatchExpandedTrailingView(isRunning: isRunning, activityId: activityId, stopwatchId: stopwatch?.id ?? "")
       }
       // Expanded - Bottom
       DynamicIslandExpandedRegion(.bottom) {

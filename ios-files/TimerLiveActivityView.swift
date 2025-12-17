@@ -16,7 +16,31 @@ struct TimerLiveActivityView: View {
   let activityId: String
 
   var isRunning: Bool { timer?.isRunning ?? false }
-  var remaining: Double { timer?.remaining ?? 0 }
+  var remaining: Double {
+    if #available(iOS 16.2, *) {
+      LiveActivityUtil.logMessage("Remaining: \(timer?.remaining ?? 0)")
+    } else {
+      // Fallback on earlier versions
+    }
+    return timer?.remaining ?? 0
+  }
+
+  // MARK: - Derived Dates
+  var startDate: Date {
+      if isRunning {
+        return Date()
+      } else {
+        return Date().addingTimeInterval(-(timer?.duration ?? 0 - remaining))
+      }
+  }
+
+  var endDate: Date {
+      Date().addingTimeInterval(remaining)
+  }
+
+  var pauseDate: Date? {
+      isRunning ? nil : Date()
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -38,14 +62,26 @@ struct TimerLiveActivityView: View {
 
       // Timer content
       HStack(spacing: 16) {
-        Text(formatTime(remaining))
+        if isRunning {
+          // Auto-updating countdown
+          Text(
+              timerInterval: startDate...endDate,
+              countsDown: true
+          )
           .font(.system(size: 28, weight: .semibold, design: .rounded))
           .monospacedDigit()
           .foregroundStyle(.white)
+        } else {
+          // Static remaining time when paused
+          Text(formatTime(remaining))
+            .font(.system(size: 28, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(.white)
+        }
 
         Spacer()
 
-        if (timer?.remaining ?? 0) > 0 {
+        if remaining > 0 {
           if isRunning {
             CircleButton(
               symbol: "pause.fill",
@@ -64,6 +100,7 @@ struct TimerLiveActivityView: View {
             )
           }
         }
+
         CircleButton(
           symbol: "stop.fill",
           intent: StopTimerIntent(
@@ -76,19 +113,6 @@ struct TimerLiveActivityView: View {
     .padding(20)
     .background(.black.opacity(0.35))
     .clipShape(RoundedRectangle(cornerRadius: 20))
-  }
-
-  private func formatTime(_ seconds: Double) -> String {
-    let sec = max(Int(seconds), 0)
-    let h = sec / 3600
-    let m = (sec % 3600) / 60
-    let s = sec % 60
-
-    if h > 0 {
-      return String(format: "%02d:%02d:%02d", h, m, s)
-    } else {
-      return String(format: "%02d:%02d", m, s)
-    }
   }
 }
 

@@ -189,13 +189,17 @@ struct StopwatchExpandedLeadingView: View {
 // MARK: - EXPANDED TRAILING VIEW
 struct StopwatchExpandedTrailingView: View {
   let isRunning: Bool
+  let activityId: String
+  let stopwatchId: String
 
   var body: some View {
     HStack(spacing: 16) {
-      CircleButton(symbol: isRunning ? "pause.fill" : "play.fill")
-
+      CircleButton(symbol: isRunning ? "pause.fill" : "play.fill",
+                   intent: isRunning ? PauseStopwatchIntent(activityId: activityId,stopwatchId: stopwatchId)
+                   : StartStopwatchIntent(activityId: activityId, stopwatchId: stopwatchId))
+      
       if isRunning {
-        CircleButton(symbol: "flag.fill")
+        CircleButton(symbol: "flag.fill", intent: LapStopwatchIntent(activityId: activityId, stopwatchId: stopwatchId))
       }
     }
     .padding(.trailing, 5)
@@ -207,18 +211,21 @@ struct StopwatchExpandedBottomView: View {
   let isRunning: Bool
   let startDate: Date
   let accumulated: TimeInterval
-
+  let deviceWidth = UIScreen.main.bounds.width
+  
   var body: some View {
-    if isRunning {
-      Text(startDate, style: .timer)
-        .font(.system(size: 34, weight: .semibold, design: .rounded))
-        .monospacedDigit()
-        .foregroundStyle(.white)
-    } else {
-      Text(formatTime(accumulated))
-        .font(.system(size: 34, weight: .semibold, design: .rounded))
-        .monospacedDigit()
-        .foregroundStyle(.white)
+    ZStack {
+      if isRunning {
+        Text(startDate, style: .timer)
+          .font(.system(size: 34, weight: .semibold, design: .rounded))
+          .multilineTextAlignment(.center)
+          .foregroundStyle(.white)
+      } else {
+        Text(formatTime(accumulated))
+          .font(.system(size: 34, weight: .semibold, design: .rounded))
+          .multilineTextAlignment(.center)
+          .foregroundStyle(.white)
+      }
     }
   }
 }
