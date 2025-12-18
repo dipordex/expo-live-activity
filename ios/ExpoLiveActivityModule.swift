@@ -1,7 +1,16 @@
 import ActivityKit
 import ExpoModulesCore
+import os.log
 
 public class ExpoLiveActivityModule: Module {
+    
+    // MARK: - Logger
+  private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "com.example.setinc", category: "ExpoLiveActivityModule")
+  
+  static func logMessage(_ message: String, type: OSLogType = .error) {
+    os_log("SetInc_Log ==> %{public}@", log: log, type: type, message)
+  }
+    
     struct LiveActivityState: Record {
         @Field var title: String?
         @Field var subtitle: String?
@@ -22,7 +31,8 @@ public class ExpoLiveActivityModule: Module {
             @Field var duration: Double?
             @Field var remaining: Double?
             @Field var isRunning: Bool?
-            @Field var endsAt: Double?
+            @Field var endsAt: Date?
+            @Field var startTime: Date?
         }
     }
 
@@ -121,7 +131,7 @@ public class ExpoLiveActivityModule: Module {
     //            newState.dynamicIslandImageName = try await resolveImage(from: name)
     //        }
     //    }
-
+    
     private func observePushToStartToken() {
         guard #available(iOS 17.2, *),
             ActivityAuthorizationInfo().areActivitiesEnabled
@@ -201,12 +211,16 @@ public class ExpoLiveActivityModule: Module {
     }
 
     func observeDarwinNotifications() {
-        let callback: CFNotificationCallback = { _, _, _, _, _ in
+        ExpoLiveActivityModule.logMessage("Registering Darwin notification observer")
+        let callback: CFNotificationCallback = { _, _, name, _, _ in
+            let notificationName = name?.rawValue as String? ?? "unknown"
+            ExpoLiveActivityModule.logMessage("Darwin notification received: \(notificationName)")
             DispatchQueue.main.async {
+                ExpoLiveActivityModule.logMessage("Reading App Group payload on main thread")
                 ExpoLiveActivityModule.shared?.readAppGroupPayload()
             }
         }
-
+        
         CFNotificationCenterAddObserver(
             CFNotificationCenterGetDarwinNotifyCenter(),
             UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque()),
@@ -215,27 +229,34 @@ public class ExpoLiveActivityModule: Module {
             nil,
             .deliverImmediately
         )
+        ExpoLiveActivityModule.logMessage("Darwin observer added successfully")
     }
 
     @objc
     func readAppGroupPayload() {
+        ExpoLiveActivityModule.logMessage("Attempting to read App Group payload")
         let defaults = UserDefaults(suiteName: "group.setInc.app.shared")
 
-        guard
-            let payload = defaults?.dictionary(forKey: "LA_Payload")
-                as? [String: String]
-        else {
+        guard let payload = defaults?.dictionary(forKey: "LA_Payload") as? [String: String] else {
+            ExpoLiveActivityModule.logMessage("LA_Payload not found or invalid in App Group")
             return
         }
+
 
         let activityId = payload["activityId"] ?? ""
         let stopwatchId = payload["stopwatchId"] ?? ""
         let timerId = payload["timerId"] ?? ""
         let action = payload["action"] ?? ""
         let mode = payload["mode"] ?? ""
-        print(
-            "Received activity Action: \(activityId), \(action), stopwatchId: \(stopwatchId)"
-        )
+        ExpoLiveActivityModule.logMessage(
+                """
+                Parsed payload:
+                activityId=\(activityId)
+                stopwatchId=\(stopwatchId)
+                timerId=\(timerId)
+                action=\(action)
+                mode=\(mode)
+                """)
         sendEvent(
             "onButtonPressed",
             [
@@ -246,9 +267,10 @@ public class ExpoLiveActivityModule: Module {
                 "mode": mode,
             ]
         )
-
+        ExpoLiveActivityModule.logMessage("Event `onButtonPressed` sent to JS")
         // Clean up
         defaults?.removeObject(forKey: "LA_Payload")
+        ExpoLiveActivityModule.logMessage("LA_Payload removed from App Group")
     }
 
     public static var shared: ExpoLiveActivityModule?
@@ -335,7 +357,8 @@ public class ExpoLiveActivityModule: Module {
                         duration: state.timer?.duration,
                         remaining: state.timer?.remaining,
                         isRunning: state.timer?.isRunning ?? false,
-                        endsAt: state.timer?.endsAt
+                        endsAt: state.timer?.endsAt,
+                        startTime: state.timer?.startTime
                     ),
                     showInDynamicIsland: state.showInDynamicIsland ?? false
                 )
@@ -343,6 +366,7 @@ public class ExpoLiveActivityModule: Module {
                 let activity = try Activity.request(
                     attributes: attributes,
                     content: .init(state: initialState, staleDate: nil)
+                    
                 )
 
                 Task {
@@ -388,7 +412,8 @@ public class ExpoLiveActivityModule: Module {
                         duration: state.timer?.duration,
                         remaining: state.timer?.remaining,
                         isRunning: state.timer?.isRunning ?? false,
-                        endsAt: state.timer?.endsAt
+                        endsAt: state.timer?.endsAt,
+                        startTime: state.timer?.startTime
                     ),
                     showInDynamicIsland: state.showInDynamicIsland ?? false
                 )
@@ -432,7 +457,8 @@ public class ExpoLiveActivityModule: Module {
                         duration: state.timer?.duration,
                         remaining: state.timer?.remaining,
                         isRunning: state.timer?.isRunning ?? false,
-                        endsAt: state.timer?.endsAt
+                        endsAt: state.timer?.endsAt,
+                        startTime: state.timer?.startTime
                     ),
                     showInDynamicIsland: state.showInDynamicIsland ?? false
                 )

@@ -83,12 +83,22 @@ struct PauseTimerIntent: LiveActivityIntent {
   }
 
   func perform() async throws -> some IntentResult {
-    postDarwinNotification(
-      activityId: activityId,
-      timerId: timerId,
-      action: "pause"
-    )
-    return .result()
+    guard #available(iOS 17.0, *) else { return .result() }
+    guard let (state, _) =
+              LiveActivityUtil.getCurrentStateData(for: "timer", id: activityId),
+            let timer = state.timer
+    else { return .result() }
+      let now = Date()
+      if let endTime = timer.endsAt, now >= endTime {
+        LiveActivityUtil.logMessage("Skipping pause as it's already past the end time.")
+          return .result()
+      }
+      postDarwinNotification(
+          activityId: activityId,
+          timerId: timerId,
+          action: "pause"
+      )
+      return .result()
   }
 }
 

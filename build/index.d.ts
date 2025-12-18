@@ -15,6 +15,7 @@ type Timer = {
     remaining?: number;
     isRunning?: boolean;
     endsAt?: number;
+    startTime?: number | null;
 }
 export type LiveActivityState = {
     title: string;

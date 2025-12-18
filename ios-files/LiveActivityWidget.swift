@@ -83,7 +83,8 @@ struct LiveActivityAttributes: ActivityAttributes {
     var duration: Double?
     var remaining: Double?
     var isRunning: Bool?
-    var endsAt: Double?
+    var endsAt: Date?
+    var startTime: Date?
   }
   
   struct ApiEndpoint: Codable, Hashable {

@@ -19,8 +19,6 @@ struct TimerLiveActivityView: View {
   var remaining: Double {
     if #available(iOS 16.2, *) {
       LiveActivityUtil.logMessage("Remaining: \(timer?.remaining ?? 0)")
-    } else {
-      // Fallback on earlier versions
     }
     return timer?.remaining ?? 0
   }
@@ -28,14 +26,20 @@ struct TimerLiveActivityView: View {
   // MARK: - Derived Dates
   var startDate: Date {
       if isRunning {
-        return Date()
+        if #available(iOS 16.2, *) {
+          LiveActivityUtil.logMessage("Timer \(timer?.id ?? "unknown") Start Time: \(timer?.startTime)")
+        }
+        return timer?.startTime ?? Date()
       } else {
         return Date().addingTimeInterval(-(timer?.duration ?? 0 - remaining))
       }
   }
 
   var endDate: Date {
-      Date().addingTimeInterval(remaining)
+    if #available(iOS 16.2, *) {
+      LiveActivityUtil.logMessage("Time \(timer?.id ?? "unknown") End Time: \(timer?.endsAt)")
+    }
+    return timer?.endsAt ?? Date().addingTimeInterval(remaining)
   }
 
   var pauseDate: Date? {
