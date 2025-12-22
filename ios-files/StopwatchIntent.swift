@@ -7,6 +7,31 @@ import ActivityKit
 import AppIntents
 import Foundation
 
+private func postDarwinNotification(
+  activityId: String,
+  stopwatchId: String,
+  action: String
+) {
+  let defaults = UserDefaults(suiteName: "group.setInc.app.shared")
+  
+  let payload: [String: String] = [
+    "activityId": activityId,
+    "stopwatchId": stopwatchId,
+    "action": action,
+    "mode": "stopwatch"
+  ]
+  
+  defaults?.set(payload, forKey: "LA_Payload")
+  
+  CFNotificationCenterPostNotification(
+    CFNotificationCenterGetDarwinNotifyCenter(),
+    CFNotificationName("setInc.app.liveactivity.button" as CFString),
+    nil,
+    nil,
+    true
+  )
+}
+  
 // MARK: - API RESPONSE MODEL
 struct StopwatchAPIResponse: Codable {
   let id: Int
@@ -169,6 +194,11 @@ struct StartStopwatchIntent: LiveActivityIntent {
           stopwatch: newStopwatch
         )
       )
+      postDarwinNotification(
+        activityId: activityId,
+        stopwatchId: stopwatchId,
+        action: "start"
+      )
 
     } catch {
       LiveActivityUtil.logMessage("Start error: \(error.localizedDescription)")
@@ -234,7 +264,11 @@ struct PauseStopwatchIntent: LiveActivityIntent {
           stopwatch: newStopwatch
         )
       )
-
+      postDarwinNotification(
+        activityId: activityId,
+        stopwatchId: stopwatchId,
+        action: "pause"
+      )
     } catch {
       LiveActivityUtil.logMessage("Paused error: \(error.localizedDescription)")
     }
@@ -300,7 +334,11 @@ struct LapStopwatchIntent: LiveActivityIntent {
           stopwatch: sw
         )
       )
-
+      postDarwinNotification(
+        activityId: activityId,
+        stopwatchId: stopwatchId,
+        action: "lap"
+      )
     } catch {
       LiveActivityUtil.logMessage("Lap error: \(error.localizedDescription)")
     }
@@ -358,7 +396,11 @@ struct ResetStopwatchIntent: LiveActivityIntent {
           stopwatch: newStopwatch
         )
       )
-
+      postDarwinNotification(
+        activityId: activityId,
+        stopwatchId: stopwatchId,
+        action: "reset"
+      )
     } catch {
       LiveActivityUtil.logMessage("Reset error: \(error.localizedDescription)")
     }
