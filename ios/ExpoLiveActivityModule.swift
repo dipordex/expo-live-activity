@@ -17,6 +17,7 @@ public class ExpoLiveActivityModule: Module {
         @Field var mode: String?
         @Field var stopwatch: Stopwatch?
         @Field var timer: Timer?
+        @Field var task: Task?
         @Field var showInDynamicIsland: Bool?
 
         struct Stopwatch: Record {
@@ -33,6 +34,11 @@ public class ExpoLiveActivityModule: Module {
             @Field var isRunning: Bool?
             @Field var endsAt: Date?
             @Field var startTime: Date?
+        }
+        
+        struct Task: Record {
+            @Field var id: String?
+            @Field var startDate: Date?
         }
     }
 
@@ -67,6 +73,7 @@ public class ExpoLiveActivityModule: Module {
         
         struct ApiEndpoint: Record {
             @Field var stopwatchEndpoints: StopwatchEndpoints?
+            @Field var taskEndpoints: String?
         }
         
         struct StopwatchEndpoints: Record {
@@ -85,12 +92,29 @@ public class ExpoLiveActivityModule: Module {
         activity: Activity<LiveActivityAttributes>,
         activityPushToken: String
     ) {
+        let mode: String
+        if #available(iOS 16.2, *) {
+            mode = activity.content.state.mode ?? ""
+        } else {
+            mode = activity.contentState.mode ?? ""
+        }
+        
+        let id: String
+        if #available(iOS 16.2, *) {
+            id = activity.content.state.task?.id ?? activity.content.state.timer?.id ?? activity.content.state.stopwatch?.id ?? ""
+        } else {
+            id = activity.contentState.task?.id ?? activity.contentState.timer?.id ?? activity.contentState.stopwatch?.id ?? ""
+        }
+        
+        
         sendEvent(
             "onTokenReceived",
             [
                 "activityID": activity.id,
                 "activityName": activity.attributes.name,
                 "activityPushToken": activityPushToken,
+                "id": id,
+                "mode": mode
             ]
         )
     }
@@ -151,6 +175,8 @@ public class ExpoLiveActivityModule: Module {
     private func observeLiveActivityUpdates() {
         guard #available(iOS 16.2, *) else { return }
 
+        ExpoLiveActivityModule.logMessage("🔍 observeLiveActivityUpdates started. pushNotificationsEnabled = \(pushNotificationsEnabled)")
+
         Task {
             for await activityUpdate in Activity<LiveActivityAttributes>
                 .activityUpdates
@@ -158,8 +184,8 @@ public class ExpoLiveActivityModule: Module {
                 let activityId = activityUpdate.id
                 let activityState = activityUpdate.activityState
 
-                print(
-                    "Received activity update: \(activityId), \(activityState)"
+                ExpoLiveActivityModule.logMessage(
+                    "📡 Activity update received: id=\(activityId), state=\(activityState)"
                 )
 
                 guard
@@ -168,7 +194,8 @@ public class ExpoLiveActivityModule: Module {
                             $0.id == activityId
                         })
                 else {
-                    return print("Didn't find activity with ID \(activityId)")
+                    ExpoLiveActivityModule.logMessage("❌ Didn't find activity with ID \(activityId)")
+                    return
                 }
 
                 if case .active = activityState {
@@ -181,33 +208,39 @@ public class ExpoLiveActivityModule: Module {
                         }
                     }
 
-                    if pushNotificationsEnabled {
-                        print(
-                            "Adding push token observer for activity \(activity.id)"
-                        )
-                        Task {
-                            for await pushToken in activity.pushTokenUpdates {
-                                let pushTokenString = pushToken.reduce("") {
-                                    $0 + String(format: "%02x", $1)
-                                }
-
-                                sendPushToken(
-                                    activity: activity,
-                                    activityPushToken: pushTokenString
-                                )
-                            }
-                        }
-                    }
+                    ExpoLiveActivityModule.logMessage("🔔 Push notifications enabled? \(pushNotificationsEnabled)")
+//                    if pushNotificationsEnabled {
+//                        ExpoLiveActivityModule.logMessage(
+//                            "✅ Adding push token observer for activity \(activity.id)"
+//                        )
+//                        Task {
+//                            for await pushToken in activity.pushTokenUpdates {
+//                                let pushTokenString = pushToken.reduce("") {
+//                                    $0 + String(format: "%02x", $1)
+//                                }
+//                                ExpoLiveActivityModule.logMessage("🔑 Push token received: \(pushTokenString)")
+//
+//                                sendPushToken(
+//                                    activity: activity,
+//                                    activityPushToken: pushTokenString
+//                                )
+//                            }
+//                        }
+//                    } else {
+//                        ExpoLiveActivityModule.logMessage("⚠️ Push notifications NOT enabled - token observer skipped")
+//                    }
                 }
             }
         }
     }
 
     private var pushNotificationsEnabled: Bool {
-        Bundle.main.object(
+        let value = Bundle.main.object(
             forInfoDictionaryKey: "ExpoLiveActivity_EnablePushNotifications"
         ) as? Bool
             ?? false
+        ExpoLiveActivityModule.logMessage("📋 Info.plist ExpoLiveActivity_EnablePushNotifications = \(value)")
+        return value
     }
 
     func observeDarwinNotifications() {
@@ -246,6 +279,7 @@ public class ExpoLiveActivityModule: Module {
         let activityId = payload["activityId"] ?? ""
         let stopwatchId = payload["stopwatchId"] ?? ""
         let timerId = payload["timerId"] ?? ""
+        let taskId = payload["taskId"] ?? ""
         let action = payload["action"] ?? ""
         let mode = payload["mode"] ?? ""
         ExpoLiveActivityModule.logMessage(
@@ -254,6 +288,7 @@ public class ExpoLiveActivityModule: Module {
                 activityId=\(activityId)
                 stopwatchId=\(stopwatchId)
                 timerId=\(timerId)
+                taskId=\(taskId)
                 action=\(action)
                 mode=\(mode)
                 """)
@@ -264,6 +299,7 @@ public class ExpoLiveActivityModule: Module {
                 "stopwatchId": stopwatchId,
                 "activityAction": action,
                 "timerId": timerId,
+                "taskId": taskId,
                 "mode": mode,
             ]
         )
@@ -360,20 +396,37 @@ public class ExpoLiveActivityModule: Module {
                         endsAt: state.timer?.endsAt,
                         startTime: state.timer?.startTime
                     ),
+                    task: LiveActivityAttributes.Task(
+                        id: state.task?.id,
+                        startDate: state.task?.startDate,
+                    ),
                     showInDynamicIsland: state.showInDynamicIsland ?? false
                 )
-
                 let activity = try Activity.request(
                     attributes: attributes,
-                    content: .init(state: initialState, staleDate: nil)
-                    
+                    content: .init(state: initialState, staleDate: nil),
+                    pushType: self.pushNotificationsEnabled ? .token : nil
                 )
 
-                Task {
-                    var newState = activity.content.state
-                    await activity.update(
-                        ActivityContent(state: newState, staleDate: nil)
+                if pushNotificationsEnabled {
+                    ExpoLiveActivityModule.logMessage(
+                        "✅ Adding push token observer for activity \(activity.id)"
                     )
+                    Task {
+                        for await pushToken in activity.pushTokenUpdates {
+                            let pushTokenString = pushToken.reduce("") {
+                                $0 + String(format: "%02x", $1)
+                            }
+                            ExpoLiveActivityModule.logMessage("🔑 Push token received: \(pushTokenString)")
+
+                            sendPushToken(
+                                activity: activity,
+                                activityPushToken: pushTokenString
+                            )
+                        }
+                    }
+                } else {
+                    ExpoLiveActivityModule.logMessage("⚠️ Push notifications NOT enabled - token observer skipped")
                 }
 
                 return activity.id
@@ -414,6 +467,10 @@ public class ExpoLiveActivityModule: Module {
                         isRunning: state.timer?.isRunning ?? false,
                         endsAt: state.timer?.endsAt,
                         startTime: state.timer?.startTime
+                    ),
+                    task: LiveActivityAttributes.Task(
+                        id: state.task?.id,
+                        startDate: state.task?.startDate,
                     ),
                     showInDynamicIsland: state.showInDynamicIsland ?? false
                 )
@@ -460,6 +517,10 @@ public class ExpoLiveActivityModule: Module {
                         endsAt: state.timer?.endsAt,
                         startTime: state.timer?.startTime
                     ),
+                    task: LiveActivityAttributes.Task(
+                        id: state.task?.id,
+                        startDate: state.task?.startDate,
+                    ),
                     showInDynamicIsland: state.showInDynamicIsland ?? false
                 )
                 await activity.update(
@@ -478,6 +539,7 @@ extension LiveActivityAttributes.ApiEndpoint {
                 lap: endpoints.lap
             )
         }
+        self.taskEndpoints = configApi?.taskEndpoints
     }
 }
 

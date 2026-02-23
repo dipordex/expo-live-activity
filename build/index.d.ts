@@ -9,6 +9,11 @@ type StopWatch = {
     lapCount: number;
 }
 
+type Task = {
+    id?: string;
+    startDate?: number;
+}
+
 type Timer = {
     id?: string;
     duration?: number;
@@ -23,6 +28,7 @@ export type LiveActivityState = {
     mode?: string;
     stopwatch?: StopWatch;
     timer?: Timer;
+    task?: Task
     showInDynamicIsland?: boolean;
 };
 export type NativeLiveActivityState = {
@@ -31,6 +37,7 @@ export type NativeLiveActivityState = {
     mode?: string;
     stopwatch?: StopWatch;
     timer?: Timer;
+    task?: Task;
     showInDynamicIsland?: boolean;
 };
 export type Padding = {
@@ -69,18 +76,21 @@ export type ActivityTokenReceivedEvent = {
     activityID: string;
     activityName: string;
     activityPushToken: string;
+    id: string
+    mode: string
 };
 export type ActivityPushToStartTokenReceivedEvent = {
     activityPushToStartToken: string;
 };
 
 type ApiEndpoint = {
-  stopwatchEndpoints?: StopwatchEndpoints
+    stopwatchEndpoints?: StopwatchEndpoints
+    taskEndpoints?: string
 }
 
 type StopwatchEndpoints = {
-  common: String
-  lap: String
+    common: String
+    lap: String
 }
 
 type ActivityState = 'active' | 'dismissed' | 'pending' | 'stale' | 'ended';
@@ -91,6 +101,7 @@ export type ActivityUpdateEvent = {
     activityAction?: string;
     stopwatchId?: string;
     timerId?: string;
+    taskId?: string
     mode?: string;
 };
 export type LiveActivityModuleEvents = {

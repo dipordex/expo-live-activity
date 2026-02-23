@@ -8,6 +8,7 @@ struct LiveActivityAttributes: ActivityAttributes {
         var mode: String?
         var stopwatch: Stopwatch?
         var timer: Timer?
+        var task: Task?
         var showInDynamicIsland: Bool?
     }
 
@@ -70,8 +71,14 @@ struct LiveActivityAttributes: ActivityAttributes {
         var startTime: Date?
     }
     
+    struct Task: Codable, Hashable {
+        var id: String?
+        var startDate: Date?
+    }
+    
     struct ApiEndpoint: Codable, Hashable {
         var stopwatchEndpoints: StopwatchEndpoints?
+        var taskEndpoints: String?
     }
     
     struct StopwatchEndpoints: Codable, Hashable {

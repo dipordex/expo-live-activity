@@ -71,4 +71,20 @@ class LiveActivityUtil {
       return nil
     }
   }
+  // MARK: - End Live Activity
+  static func endLiveActivity(for mode: String,id: String,contentState state:
+                              LiveActivityAttributes.ContentState,
+                              immediate: Bool = true) {
+    logMessage("Attempting to end live activity for id: \(id), mode: \(mode)")
+    guard let activity = getLiveActivity(for: mode, id: id) else {
+      logMessage("Cannot end, live activity not found for id: \(id), mode: \(mode)")
+      return
+    }
+    let content = ActivityContent(state: state, staleDate: nil)
+    Task {
+      await activity.end(content,dismissalPolicy: immediate ? .immediate : .default)
+      logMessage("Live activity ended successfully for id: \(id), mode: \(mode)")
+    }
+  }
+
 }

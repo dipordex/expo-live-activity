@@ -24,12 +24,18 @@ type Timer = {
   startTime?: number | null;
 }
 
+type Task = {
+  id?: string;
+  startDate?: number;
+}
+
 export type LiveActivityState = {
   title: string
   subtitle?: string
   mode?: string
   stopwatch?: StopWatch
   timer?: Timer
+  task?: Task
   showInDynamicIsland?: boolean
 }
 
@@ -39,6 +45,7 @@ export type NativeLiveActivityState = {
   mode?: string
   stopwatch?: StopWatch
   timer?: Timer
+  task?: Task
   showInDynamicIsland?: boolean
 }
 
@@ -86,6 +93,8 @@ export type ActivityTokenReceivedEvent = {
   activityID: string
   activityName: string
   activityPushToken: string
+  id: string
+  mode: string
 }
 
 export type ActivityPushToStartTokenReceivedEvent = {
@@ -94,6 +103,7 @@ export type ActivityPushToStartTokenReceivedEvent = {
 
 type ApiEndpoint = {
   stopwatchEndpoints?: StopwatchEndpoints
+  taskEndpoints?: string
 }
 
 type StopwatchEndpoints = {
@@ -110,6 +120,7 @@ export type ActivityUpdateEvent = {
   activityAction?: string
   stopwatchId?: string
   timerId?: string
+  taskId?: string
   mode?: string
 }
 
