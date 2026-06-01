@@ -18,6 +18,7 @@ public class ExpoLiveActivityModule: Module {
         @Field var stopwatch: Stopwatch?
         @Field var timer: Timer?
         @Field var task: Task?
+        @Field var tapIn: TapIn?
         @Field var showInDynamicIsland: Bool?
 
         struct Stopwatch: Record {
@@ -37,6 +38,11 @@ public class ExpoLiveActivityModule: Module {
         }
         
         struct Task: Record {
+            @Field var id: String?
+            @Field var startDate: Date?
+        }
+
+        struct TapIn: Record {
             @Field var id: String?
             @Field var startDate: Date?
         }
@@ -74,6 +80,7 @@ public class ExpoLiveActivityModule: Module {
         struct ApiEndpoint: Record {
             @Field var stopwatchEndpoints: StopwatchEndpoints?
             @Field var taskEndpoints: String?
+            @Field var tapInEndpoints: String?
         }
         
         struct StopwatchEndpoints: Record {
@@ -400,6 +407,10 @@ public class ExpoLiveActivityModule: Module {
                         id: state.task?.id,
                         startDate: state.task?.startDate,
                     ),
+                    tapIn: LiveActivityAttributes.TapIn(
+                        id: state.tapIn?.id,
+                        startDate: state.tapIn?.startDate
+                    ),
                     showInDynamicIsland: state.showInDynamicIsland ?? false
                 )
                 let activity = try Activity.request(
@@ -472,6 +483,10 @@ public class ExpoLiveActivityModule: Module {
                         id: state.task?.id,
                         startDate: state.task?.startDate,
                     ),
+                     tapIn: LiveActivityAttributes.TapIn(
+                        id: state.tapIn?.id,
+                        startDate: state.tapIn?.startDate
+                    ),
                     showInDynamicIsland: state.showInDynamicIsland ?? false
                 )
                 await activity.end(
@@ -521,6 +536,10 @@ public class ExpoLiveActivityModule: Module {
                         id: state.task?.id,
                         startDate: state.task?.startDate,
                     ),
+                     tapIn: LiveActivityAttributes.TapIn(
+                        id: state.tapIn?.id,
+                        startDate: state.tapIn?.startDate
+                    ),
                     showInDynamicIsland: state.showInDynamicIsland ?? false
                 )
                 await activity.update(
@@ -540,6 +559,7 @@ extension LiveActivityAttributes.ApiEndpoint {
             )
         }
         self.taskEndpoints = configApi?.taskEndpoints
+        self.tapInEndpoints = configApi?.tapInEndpoints
     }
 }
 

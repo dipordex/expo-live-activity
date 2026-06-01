@@ -10,6 +10,7 @@ struct LiveActivityAttributes: ActivityAttributes {
     var stopwatch: Stopwatch?
     var timer: Timer?
     var task: Task?
+    var tapIn: TapIn?
     var showInDynamicIsland: Bool?
 
     init(
@@ -96,6 +97,17 @@ struct LiveActivityAttributes: ActivityAttributes {
       self.startDate = startDate
     }
   }
+  
+  
+  struct TapIn: Codable, Hashable {
+    var id: String?
+    var startDate: Date?
+
+    init(id: String? = nil, startDate: Date? = Date()) {
+      self.id = id
+      self.startDate = startDate
+    }
+  }
 
   struct Timer: Codable, Hashable {
     var id: String?
@@ -109,6 +121,7 @@ struct LiveActivityAttributes: ActivityAttributes {
   struct ApiEndpoint: Codable, Hashable {
     var stopwatchEndpoints: StopwatchEndpoints?
     var taskEndpoints: String?
+    var tapInEndpoints: String?
   }
 
   struct StopwatchEndpoints: Codable, Hashable {
@@ -148,6 +161,18 @@ struct LiveActivityWidget: Widget {
           subtitle: context.state.subtitle,
           activityId: context.activityID,
           task: context.state.task
+        )
+        .activityBackgroundTint(
+          context.attributes.backgroundColor.map { Color(hex: $0) }
+        )
+        .activitySystemActionForegroundColor(Color.black)
+        .applyWidgetURL(from: context.attributes.deepLinkUrl)
+      case "tapin":
+        TapInLiveActivityView(
+          title: context.state.title,
+          subtitle: context.state.subtitle,
+          activityId: context.activityID,
+          tapIn: context.state.tapIn
         )
         .activityBackgroundTint(
           context.attributes.backgroundColor.map { Color(hex: $0) }

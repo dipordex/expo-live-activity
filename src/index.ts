@@ -29,6 +29,11 @@ type Task = {
   startDate?: number;
 }
 
+type TapIn = {
+    id?: string;
+    startDate?: number;
+}
+
 export type LiveActivityState = {
   title: string
   subtitle?: string
@@ -36,6 +41,7 @@ export type LiveActivityState = {
   stopwatch?: StopWatch
   timer?: Timer
   task?: Task
+  tapIn?: TapIn
   showInDynamicIsland?: boolean
 }
 
@@ -46,6 +52,7 @@ export type NativeLiveActivityState = {
   stopwatch?: StopWatch
   timer?: Timer
   task?: Task
+  tapIn?: TapIn
   showInDynamicIsland?: boolean
 }
 
@@ -104,6 +111,8 @@ export type ActivityPushToStartTokenReceivedEvent = {
 type ApiEndpoint = {
   stopwatchEndpoints?: StopwatchEndpoints
   taskEndpoints?: string
+  tapInEndpoints?: string
+
 }
 
 type StopwatchEndpoints = {
