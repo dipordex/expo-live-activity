@@ -106,13 +106,18 @@ public class ExpoLiveActivityModule: Module {
             mode = activity.contentState.mode ?? ""
         }
         
-        let id: String
+         let id: String
         if #available(iOS 16.2, *) {
-            id = activity.content.state.task?.id ?? activity.content.state.timer?.id ?? activity.content.state.stopwatch?.id ?? ""
+            id = activity.content.state.task?.id ??
+            activity.content.state.tapIn?.id ??
+            activity.content.state.timer?.id ??
+            activity.content.state.stopwatch?.id ?? ""
         } else {
-            id = activity.contentState.task?.id ?? activity.contentState.timer?.id ?? activity.contentState.stopwatch?.id ?? ""
+            id = activity.contentState.task?.id ??
+            activity.contentState.tapIn?.id ??
+            activity.contentState.timer?.id ??
+            activity.contentState.stopwatch?.id ?? ""
         }
-        
         
         sendEvent(
             "onTokenReceived",
